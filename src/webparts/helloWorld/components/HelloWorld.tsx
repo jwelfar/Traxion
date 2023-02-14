@@ -19,21 +19,24 @@ let _sp: SPFI = null;
 
 export interface IDetailsTableItem {
   NO_ORDEN_REPOSICION_UNOPS: string;
+  ID_x002d_Remision: string;
   NO_REMISION: string;
   NO_LICITACION: string;
   NO_CONTRATO: string;
   PROCEDENCIA: string;
   Registro_Sanitario: string;
+  REGISTRO_SANITARIO: string;
   MARCA: string;
   TIPO_MONEDA: string;
   CLAVE: string;
   Fecha_Caducidad: string;
   Lote: string;
   Cantidad: string;
+  CANTIDAD_RECIBIDA: string;
   Fecha_Fabircada: string;
   Presion_sin_iva: string;
+  PRECIO_SIN_IVA: string;
   IVA: string;
-  ID_x002d_Remision: string;
 }
 
 export interface ITableState {
@@ -70,11 +73,33 @@ export default class HelloWorld extends React.Component<
         minWidth: 150,
         maxWidth: 200,
         onRender: (global: any) => {
-          return <span>{global.NO_ORDEN_REPOSICION_UNOPS}</span>;
+          return (
+            <span>
+              {global.NO_ORDEN_REPOSICION_UNOPS || global.ID_x002d_Remision}
+            </span>
+          );
         },
       },
       {
         key: "column2",
+        name: "OR",
+        ariaLabel:
+          "Column operations for File type, Press to sort on File type",
+        fieldName: "OR",
+        isResizable: true,
+        minWidth: 150,
+        maxWidth: 200,
+        onRender: (global: any) => {
+          const numOrden =
+            global.NO_ORDEN_REPOSICION_UNOPS || global.ID_x002d_Remision;
+          console.log("orden", numOrden);
+          return (
+            <span>{numOrden.substring(numOrden.lastIndexOf("/") + 1)}</span>
+          );
+        },
+      },
+      {
+        key: "column3",
         name: "No Remision",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -87,7 +112,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column3",
+        key: "column4",
         name: "No Licitación",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -100,7 +125,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column4",
+        key: "column5",
         name: "No Contrato",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -113,7 +138,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column5",
+        key: "column6",
         name: "Procedencia",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -126,7 +151,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column6",
+        key: "column7",
         name: "Registro Sanitario",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -135,11 +160,15 @@ export default class HelloWorld extends React.Component<
         minWidth: 150,
         maxWidth: 200,
         onRender: (global: any) => {
-          return <span>{global.Registro_Sanitario}</span>;
+          return (
+            <span>
+              {global.Registro_Sanitario || global.REGISTRO_SANITARIO}
+            </span>
+          );
         },
       },
       {
-        key: "column7",
+        key: "column8",
         name: "Marca",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -152,7 +181,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column8",
+        key: "column9",
         name: "Tipo Moneda",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -165,7 +194,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column9",
+        key: "column10",
         name: "Clave",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -178,7 +207,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column10",
+        key: "column11",
         name: "Fecha Caducidad",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -191,7 +220,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column11",
+        key: "column12",
         name: "Lote",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -204,7 +233,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column12",
+        key: "column13",
         name: "Cantidad",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -213,11 +242,11 @@ export default class HelloWorld extends React.Component<
         minWidth: 150,
         maxWidth: 200,
         onRender: (global: any) => {
-          return <span>{global.Cantidad}</span>;
+          return <span>{global.Cantidad || global.CANTIDAD_RECIBIDA}</span>;
         },
       },
       {
-        key: "column13",
+        key: "column14",
         name: "Fecha Fabricación",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -230,7 +259,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        key: "column14",
+        key: "column15",
         name: "Precio",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -239,11 +268,11 @@ export default class HelloWorld extends React.Component<
         minWidth: 150,
         maxWidth: 200,
         onRender: (global: any) => {
-          return <span>{global.Presion_sin_iva}</span>;
+          return <span>{global.Presion_sin_iva || global.PRECIO_SIN_IVA}</span>;
         },
       },
       {
-        key: "column15",
+        key: "column16",
         name: "IVA",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
@@ -280,7 +309,10 @@ export default class HelloWorld extends React.Component<
             "MARCA",
             "TIPO_MONEDA",
             "CLAVE",
-            "IVA"
+            "IVA",
+            "REGISTRO_SANITARIO",
+            "CANTIDAD_RECIBIDA",
+            "PRECIO_SIN_IVA"
           )();
 
         this.setState({
@@ -379,7 +411,7 @@ export default class HelloWorld extends React.Component<
             };
           })
         );
-        // console.log("resukt", result);
+        console.log("resukt", result);
       });
       this.setState({
         DefTable: result.flat(),
