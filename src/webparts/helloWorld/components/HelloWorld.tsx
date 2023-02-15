@@ -10,10 +10,12 @@ import "@pnp/sp/site-users/web";
 import "@pnp/sp/folders";
 import "@pnp/sp/files";
 import {
+  DefaultButton,
   DetailsList,
   DetailsListLayoutMode,
   IColumn,
 } from "office-ui-fabric-react";
+import * as XLSX from "xlsx";
 
 let _sp: SPFI = null;
 
@@ -43,7 +45,7 @@ export interface ITableState {
   columns: IColumn[];
   DatosAI: IDetailsTableItem[];
   Remisiones: IDetailsTableItem[];
-  DefTable: IColumn[];
+  DefTable: any[];
 }
 
 export const getSP = (context?: WebPartContext): SPFI => {
@@ -73,11 +75,7 @@ export default class HelloWorld extends React.Component<
         minWidth: 150,
         maxWidth: 200,
         onRender: (global: any) => {
-          return (
-            <span>
-              {global.NO_ORDEN_REPOSICION_UNOPS || global.ID_x002d_Remision}
-            </span>
-          );
+          return <span>{global.NO_ORDEN_REPOSICION_UNOPS}</span>;
         },
       },
       {
@@ -92,15 +90,13 @@ export default class HelloWorld extends React.Component<
         onRender: (global: any) => {
           const numOrden =
             global.NO_ORDEN_REPOSICION_UNOPS || global.ID_x002d_Remision;
-          console.log("orden", numOrden);
-          return (
-            <span>{numOrden.substring(numOrden.lastIndexOf("/") + 1)}</span>
-          );
+          const or = numOrden.substring(numOrden.lastIndexOf("/") + 1);
+          return <span>{or}</span>;
         },
       },
       {
         key: "column3",
-        name: "No Remision",
+        name: "No Remisión",
         ariaLabel:
           "Column operations for File type, Press to sort on File type",
         fieldName: "NO_REMISION",
@@ -162,7 +158,9 @@ export default class HelloWorld extends React.Component<
         onRender: (global: any) => {
           return (
             <span>
-              {global.Registro_Sanitario || global.REGISTRO_SANITARIO}
+              {global.Registro_Sanitario
+                ? global.Registro_Sanitario
+                : global.REGISTRO_SANITARIO}
             </span>
           );
         },
@@ -295,9 +293,10 @@ export default class HelloWorld extends React.Component<
   }
 
   private async getAIDataTable(): Promise<void> {
-    let items: [];
+    let items: any = [];
     if (this.props.DatosAI) {
       try {
+        let next = true;
         items = await getSP(this.props.context)
           .web.lists.getById(this.props.DatosAI.id)
           .items.select(
@@ -313,11 +312,23 @@ export default class HelloWorld extends React.Component<
             "REGISTRO_SANITARIO",
             "CANTIDAD_RECIBIDA",
             "PRECIO_SIN_IVA"
-          )();
+          )
+          .top(5000)
+          .getPaged();
+
+        while (next) {
+          if (items.hasNext) {
+            items = await items.getNext();
+          } else {
+            next = false;
+          }
+        }
 
         this.setState({
-          DatosAI: items,
+          DatosAI: items.results,
         });
+
+        return items.results;
       } catch (err) {
         console.log("Error", err);
         err.res.json().then(() => {
@@ -328,9 +339,10 @@ export default class HelloWorld extends React.Component<
   }
 
   private async getRemisionDataTable(): Promise<void> {
-    let items: [];
+    let items: any = [];
     if (this.props.Remisiones) {
       try {
+        let next = true;
         items = await getSP(this.props.context)
           .web.lists.getById(this.props.Remisiones.id)
           .items.select(
@@ -341,11 +353,27 @@ export default class HelloWorld extends React.Component<
             "Fecha_Fabircada",
             "Fecha_Caducidad",
             "ID_x002d_Remision"
-          )();
+          )
+          .top(5000)
+          .getPaged();
 
+        const arr = items.results;
+
+        while (next) {
+          if (items.hasNext) {
+            items = await items.getNext();
+            arr.concat(items.results);
+          } else {
+            next = false;
+          }
+        }
+        console.log("arr", arr);
         this.setState({
-          Remisiones: items,
+          Remisiones: arr,
         });
+
+        console.log(items);
+        return items.results;
       } catch (err) {
         console.log("Error", err);
         err.res.json().then(() => {
@@ -411,7 +439,6 @@ export default class HelloWorld extends React.Component<
             };
           })
         );
-        console.log("resukt", result);
       });
       this.setState({
         DefTable: result.flat(),
@@ -426,8 +453,48 @@ export default class HelloWorld extends React.Component<
   }
 
   public render(): React.ReactElement<IHelloWorldProps> {
+    const handleOnExport = () => {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(
+        this.state.DefTable.map((item) => {
+          const OR = item.NO_ORDEN_REPOSICION_UNOPS || item.ID_x002d_Remision;
+          const or = OR.substring(OR.lastIndexOf("/") + 1);
+          return {
+            "No Orden":
+              item.NO_ORDEN_REPOSICION_UNOPS || item.ID_x002d_Remision,
+            Or: or,
+            "No Remisión": item.NO_REMISION,
+            "No Licitación": item.NO_LICITACION,
+            "No Contrato": item.NO_CONTRATO,
+            Procedencia: item.PROCEDENCIA,
+            "Registro Sanitario":
+              item.REGISTRO_SANITARIO || item.Registro_Sanitario,
+            Marca: item.MARCA,
+            "Tipo Moneda": item.TIPO_MONEDA,
+            Clave: item.CLAVE,
+            "Fecha Caducidad": item.Fecha_Caducidad,
+            Lote: item.Lote,
+            Cantidad: item.CANTIDAD_RECIBIDA || item.Cantidad,
+            "Fecha Fabricación": item.Fecha_Fabircada,
+            Precio: item.PRECIO_SIN_IVA || item.Presion_sin_iva,
+            IVA: item.IVA,
+          };
+        })
+      );
+      XLSX.utils.book_append_sheet(wb, ws, "Hoja1");
+
+      XLSX.writeFile(wb, "Factura.xlsx");
+    };
+
     return (
       <section>
+        <DefaultButton
+          text="Exportar"
+          allowDisabledFocus
+          onClick={() => handleOnExport()}
+        />
+
+        <br />
         <DetailsList
           layoutMode={DetailsListLayoutMode.justified}
           items={this.state.DefTable}
