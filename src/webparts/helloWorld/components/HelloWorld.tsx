@@ -9,13 +9,9 @@ import "@pnp/sp/items";
 import "@pnp/sp/site-users/web";
 import "@pnp/sp/folders";
 import "@pnp/sp/files";
-import {
-  DefaultButton,
-  DetailsList,
-  DetailsListLayoutMode,
-  IColumn,
-} from "office-ui-fabric-react";
+import { DefaultButton } from "office-ui-fabric-react";
 import * as XLSX from "xlsx";
+import DataTable from "react-data-table-component";
 
 let _sp: SPFI = null;
 
@@ -42,7 +38,7 @@ export interface IDetailsTableItem {
 }
 
 export interface ITableState {
-  columns: IColumn[];
+  columns: any[];
   DatosAI: IDetailsTableItem[];
   Remisiones: IDetailsTableItem[];
   DefTable: any[];
@@ -64,222 +60,185 @@ export default class HelloWorld extends React.Component<
   constructor(props: IHelloWorldProps) {
     super(props);
 
-    const columnas: IColumn[] = [
+    const columnas = [
       {
-        key: "column1",
+        id: "column1",
+        grow: 2,
+        center: true,
         name: "No Orden",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "NO_ORDEN_REPOSICION_UNOPS",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.NO_ORDEN_REPOSICION_UNOPS}</span>;
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.NO_ORDEN_REPOSICION_UNOPS}</span>;
         },
       },
       {
-        key: "column2",
+        id: "column2",
+        center: true,
         name: "OR",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "OR",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
           const numOrden =
-            global.NO_ORDEN_REPOSICION_UNOPS || global.ID_x002d_Remision;
+            row.NO_ORDEN_REPOSICION_UNOPS || row.ID_x002d_Remision;
           const or = numOrden.substring(numOrden.lastIndexOf("/") + 1);
           return <span>{or}</span>;
         },
       },
       {
-        key: "column3",
+        id: "column3",
+        center: true,
         name: "No Remisión",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "NO_REMISION",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.NO_REMISION}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.NO_REMISION}</span>;
         },
       },
       {
-        key: "column4",
+        id: "column4",
+        center: true,
         name: "No Licitación",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "NO_LICITACION",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.NO_LICITACION}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.NO_LICITACION}</span>;
         },
       },
       {
-        key: "column5",
+        id: "column5",
+        center: true,
         name: "No Contrato",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "NO_CONTRATO",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.NO_CONTRATO}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.NO_CONTRATO}</span>;
         },
       },
       {
-        key: "column6",
+        id: "column6",
+        center: true,
         name: "Procedencia",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "PROCEDENCIA",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.PROCEDENCIA}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.PROCEDENCIA}</span>;
         },
       },
       {
-        key: "column7",
+        id: "column7",
+        center: true,
         name: "Registro Sanitario",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "Registro_Sanitario",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
           return (
-            <span>
-              {global.Registro_Sanitario
-                ? global.Registro_Sanitario
-                : global.REGISTRO_SANITARIO}
-            </span>
+            <span>{row.Registro_Sanitario || row.REGISTRO_SANITARIO}</span>
           );
         },
       },
       {
-        key: "column8",
+        id: "column8",
+        center: true,
         name: "Marca",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "MARCA",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.MARCA}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.MARCA}</span>;
         },
       },
       {
-        key: "column9",
+        id: "column9",
+        center: true,
         name: "Tipo Moneda",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "TIPO_MONEDA",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.TIPO_MONEDA}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.TIPO_MONEDA}</span>;
         },
       },
       {
-        key: "column10",
+        id: "column10",
+        center: true,
         name: "Clave",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "CLAVE",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.CLAVE}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.CLAVE}</span>;
         },
       },
       {
-        key: "column11",
+        id: "column11",
+        center: true,
         name: "Fecha Caducidad",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "Fecha_Caducidad",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.Fecha_Caducidad}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.Fecha_Caducidad}</span>;
         },
       },
       {
-        key: "column12",
+        id: "column12",
+        center: true,
         name: "Lote",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "Lote",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.Lote}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.Lote}</span>;
         },
       },
       {
-        key: "column13",
+        id: "column13",
+        center: true,
         name: "Cantidad",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "Cantidad",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.Cantidad || global.CANTIDAD_RECIBIDA}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.Cantidad || row.CANTIDAD_RECIBIDA}</span>;
         },
       },
       {
-        key: "column14",
+        id: "column14",
+        center: true,
         name: "Fecha Fabricación",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "Fecha_Fabircada",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.Fecha_Fabircada}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.Fecha_Fabircada}</span>;
         },
       },
       {
-        key: "column15",
+        id: "column15",
+        center: true,
         name: "Precio",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "Presion_sin_iva",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.Presion_sin_iva || global.PRECIO_SIN_IVA}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.Presion_sin_iva || row.PRECIO_SIN_IVA}</span>;
         },
       },
       {
-        key: "column16",
+        id: "column16",
+        center: true,
         name: "IVA",
-        ariaLabel:
-          "Column operations for File type, Press to sort on File type",
-        fieldName: "IVA",
-        isResizable: true,
-        minWidth: 150,
-        maxWidth: 200,
-        onRender: (global: any) => {
-          return <span>{global.IVA}</span>;
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{row.IVA}</span>;
         },
       },
     ];
@@ -294,6 +253,7 @@ export default class HelloWorld extends React.Component<
 
   private async getAIDataTable(): Promise<void> {
     let items: any = [];
+    let response: any = [];
     if (this.props.DatosAI) {
       try {
         let next = true;
@@ -313,22 +273,26 @@ export default class HelloWorld extends React.Component<
             "CANTIDAD_RECIBIDA",
             "PRECIO_SIN_IVA"
           )
-          .top(5000)
+          .top(20)
           .getPaged();
+
+        const data = items.results;
+        response = response.concat(data);
 
         while (next) {
           if (items.hasNext) {
             items = await items.getNext();
+            response = response.concat(items.results);
           } else {
             next = false;
           }
         }
 
         this.setState({
-          DatosAI: items.results,
+          DatosAI: response,
         });
 
-        return items.results;
+        return response;
       } catch (err) {
         console.log("Error", err);
         err.res.json().then(() => {
@@ -340,6 +304,7 @@ export default class HelloWorld extends React.Component<
 
   private async getRemisionDataTable(): Promise<void> {
     let items: any = [];
+    let response: any = [];
     if (this.props.Remisiones) {
       try {
         let next = true;
@@ -354,26 +319,25 @@ export default class HelloWorld extends React.Component<
             "Fecha_Caducidad",
             "ID_x002d_Remision"
           )
-          .top(5000)
+          .top(20)
           .getPaged();
 
-        const arr = items.results;
+        const data = items.results;
+        response = response.concat(data);
 
         while (next) {
           if (items.hasNext) {
             items = await items.getNext();
-            arr.concat(items.results);
+            response = response.concat(items.results);
           } else {
             next = false;
           }
         }
-        console.log("arr", arr);
         this.setState({
-          Remisiones: arr,
+          Remisiones: response,
         });
 
-        console.log(items);
-        return items.results;
+        return response;
       } catch (err) {
         console.log("Error", err);
         err.res.json().then(() => {
@@ -443,6 +407,7 @@ export default class HelloWorld extends React.Component<
       this.setState({
         DefTable: result.flat(),
       });
+      console.log(this.state.DefTable);
     }
   };
 
@@ -495,12 +460,10 @@ export default class HelloWorld extends React.Component<
         />
 
         <br />
-        <DetailsList
-          layoutMode={DetailsListLayoutMode.justified}
-          items={this.state.DefTable}
+        <DataTable
           columns={this.state.columns}
-          compact={true}
-          setKey="set"
+          data={this.state.DefTable}
+          pagination
         />
       </section>
     );
