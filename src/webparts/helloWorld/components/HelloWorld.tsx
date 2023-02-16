@@ -16,12 +16,15 @@ import DataTable from "react-data-table-component";
 let _sp: SPFI = null;
 
 export interface IDetailsTableItem {
+  Title:string;
   NO_ORDEN_REPOSICION_UNOPS: string;
   ID_x002d_Remision: string;
   NO_REMISION: string;
   NO_LICITACION: string;
   NO_CONTRATO: string;
+  FECHA_SELLO_RECEPCION:string;
   PROCEDENCIA: string;
+  RFC_LABORATORIO:string
   Registro_Sanitario: string;
   REGISTRO_SANITARIO: string;
   MARCA: string;
@@ -35,6 +38,7 @@ export interface IDetailsTableItem {
   Presion_sin_iva: string;
   PRECIO_SIN_IVA: string;
   IVA: string;
+  ENTIDAD_FEDERATIVA:string;
 }
 
 export interface ITableState {
@@ -271,7 +275,11 @@ export default class HelloWorld extends React.Component<
             "IVA",
             "REGISTRO_SANITARIO",
             "CANTIDAD_RECIBIDA",
-            "PRECIO_SIN_IVA"
+            "PRECIO_SIN_IVA",
+            "Title",
+            "ENTIDAD_FEDERATIVA",
+            "RFC_LABORATORIO",
+            "FECHA_SELLO_RECEPCION"
           )
           .top(20)
           .getPaged();
@@ -353,7 +361,7 @@ export default class HelloWorld extends React.Component<
       this.state.DatosAI.forEach((datoAI) => {
         const remFilter = this.state.Remisiones.filter((remision) => {
           return (
-            datoAI.NO_ORDEN_REPOSICION_UNOPS === remision.ID_x002d_Remision
+            datoAI.Title === remision.ID_x002d_Remision
           );
         });
 
@@ -422,31 +430,71 @@ export default class HelloWorld extends React.Component<
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(
         this.state.DefTable.map((item) => {
-          const OR = item.NO_ORDEN_REPOSICION_UNOPS || item.ID_x002d_Remision;
+          const OR = item.NO_ORDEN_REPOSICION_UNOPS ;
           const or = OR.substring(OR.lastIndexOf("/") + 1);
           return {
-            "No Orden":
-              item.NO_ORDEN_REPOSICION_UNOPS || item.ID_x002d_Remision,
-            Or: or,
-            "No Remisión": item.NO_REMISION,
-            "No Licitación": item.NO_LICITACION,
-            "No Contrato": item.NO_CONTRATO,
+            "NO_ORDEN_REPOSICION_UNOPS":
+              item.NO_ORDEN_REPOSICION_UNOPS,
+            "OR": or,
+            "NO_REMISION": item.NO_REMISION || item.ID_x002d_Remisio,
+            "NO_LICITACION": item.NO_LICITACION,
+            "NO_CONTRATO": item.NO_CONTRATO,
             Procedencia: item.PROCEDENCIA,
-            "Registro Sanitario":
+            "REGISTRO_SANITARIO":
               item.REGISTRO_SANITARIO || item.Registro_Sanitario,
-            Marca: item.MARCA,
-            "Tipo Moneda": item.TIPO_MONEDA,
-            Clave: item.CLAVE,
-            "Fecha Caducidad": item.Fecha_Caducidad,
-            Lote: item.Lote,
-            Cantidad: item.CANTIDAD_RECIBIDA || item.Cantidad,
+            "MARCA": item.MARCA,
+            "TIPO_MONEDA": item.TIPO_MONEDA,
+            "CLAVE": item.CLAVE,
+            "FECHA_CADUCIDAD": item.Fecha_Caducidad,
+            "LOTE": item.Lote,
+            "CANTIDAD_RECIBIDA": item.CANTIDAD_RECIBIDA || item.Cantidad,
             "Fecha Fabricación": item.Fecha_Fabircada,
-            Precio: item.PRECIO_SIN_IVA || item.Presion_sin_iva,
-            IVA: item.IVA,
+            "PRECIO_SIN_IVA": item.PRECIO_SIN_IVA || item.Presion_sin_iva,
+            "IVA": item.IVA,
           };
         })
       );
-      XLSX.utils.book_append_sheet(wb, ws, "Hoja1");
+      const ws2 = XLSX.utils.json_to_sheet(
+        this.state.DefTable.map((item) => {
+          return {
+            "CLAS_PTAL_OL":'098316150905',
+            "NO_LICITACION": item.NO_LICITACION,
+            "NO_CONTRATO": item.NO_CONTRATO,
+            "RFC_LABORATORIO":item.RFC_LABORATORIO,
+            "NO_ORDEN_REPOSICION_UNOPS":
+              item.NO_ORDEN_REPOSICION_UNOPS,
+            "FECHA_SELLO_RECEPCION": item.FECHA_SELLO_RECEPCION,
+           "CLAVE":item.CLAVE,
+            "PROCEDENCIA": item.PROCEDENCIA,
+            "REGISTRO_SANITARIO":
+              item.REGISTRO_SANITARIO || item.Registro_Sanitario,
+            "MARCA": item.MARCA,
+            "FECHA_FABRICACION": item.Fecha_Fabircada,
+            "FECHA_CADUCIDAD": item.Fecha_Caducidad,
+            "LOTE": item.Lote,
+            "CANTIDAD_RECIBIDA": item.CANTIDAD_RECIBIDA || item.Cantidad,
+            "PRECIO_SIN_IVA": item.PRECIO_SIN_IVA || item.Presion_sin_iva,
+            "TIPO_MONEDA":item.TIPO_MONEDA
+          };
+        })
+      );
+      const ws3 = XLSX.utils.json_to_sheet(
+        this.state.DefTable.map((item) => {
+          return {
+            "CLAS_PTAL_OL":'098316150905',
+            "NO_ORDEN_REPOSICION_UNOPS":
+            item.NO_ORDEN_REPOSICION_UNOPS,
+            "ENTIDAD_FEDERATIVA":item.ENTIDAD_FEDERATIVA,
+            "CLAVE":item.CLAVE,
+            "CANTIDAD_RECIBIDA": item.CANTIDAD_RECIBIDA || item.Cantidad,
+            "NO_REMISION":item.NO_REMISION,
+            
+          };
+        })
+      );
+      XLSX.utils.book_append_sheet(wb, ws, "WMS IZEL");
+      XLSX.utils.book_append_sheet(wb, ws2, "PCCA");
+      XLSX.utils.book_append_sheet(wb, ws3, "PCC2");
 
       XLSX.writeFile(wb, "Factura.xlsx");
     };
