@@ -9,22 +9,26 @@ import "@pnp/sp/items";
 import "@pnp/sp/site-users/web";
 import "@pnp/sp/folders";
 import "@pnp/sp/files";
-import { DefaultButton } from "office-ui-fabric-react";
+import {
+  DefaultButton,
+  TextField,
+  ITextFieldStyles,
+} from "office-ui-fabric-react";
 import * as XLSX from "xlsx";
 import DataTable from "react-data-table-component";
 
 let _sp: SPFI = null;
 
 export interface IDetailsTableItem {
-  Title:string;
+  Title: string;
   NO_ORDEN_REPOSICION_UNOPS: string;
   ID_x002d_Remision: string;
   NO_REMISION: string;
   NO_LICITACION: string;
   NO_CONTRATO: string;
-  FECHA_SELLO_RECEPCION:string;
+  FECHA_SELLO_RECEPCION: string;
   PROCEDENCIA: string;
-  RFC_LABORATORIO:string
+  RFC_LABORATORIO: string;
   Registro_Sanitario: string;
   REGISTRO_SANITARIO: string;
   MARCA: string;
@@ -38,7 +42,7 @@ export interface IDetailsTableItem {
   Presion_sin_iva: string;
   PRECIO_SIN_IVA: string;
   IVA: string;
-  ENTIDAD_FEDERATIVA:string;
+  ENTIDAD_FEDERATIVA: string;
 }
 
 export interface ITableState {
@@ -46,6 +50,7 @@ export interface ITableState {
   DatosAI: IDetailsTableItem[];
   Remisiones: IDetailsTableItem[];
   DefTable: any[];
+  filterText: string;
 }
 
 export const getSP = (context?: WebPartContext): SPFI => {
@@ -67,6 +72,16 @@ export default class HelloWorld extends React.Component<
     const columnas = [
       {
         id: "column1",
+        center: true,
+        name: "No Orden",
+        minWidth: "250px",
+        maxWidth: "350px",
+        selector: (row: any) => {
+          return <span>{row.RAZON_SOCIAL}</span>;
+        },
+      },
+      {
+        id: "column2",
         grow: 2,
         center: true,
         name: "No Orden",
@@ -77,7 +92,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column2",
+        id: "column3",
         center: true,
         name: "OR",
         minWidth: "150px",
@@ -90,7 +105,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column3",
+        id: "column4",
         center: true,
         name: "No Remisión",
         wrap: true,
@@ -101,7 +116,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column4",
+        id: "column5",
         center: true,
         name: "No Licitación",
         wrap: true,
@@ -112,7 +127,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column5",
+        id: "column6",
         center: true,
         name: "No Contrato",
         wrap: true,
@@ -123,7 +138,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column6",
+        id: "column7",
         center: true,
         name: "Procedencia",
         wrap: true,
@@ -134,7 +149,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column7",
+        id: "column8",
         center: true,
         name: "Registro Sanitario",
         wrap: true,
@@ -147,7 +162,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column8",
+        id: "column9",
         center: true,
         name: "Marca",
         wrap: true,
@@ -158,7 +173,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column9",
+        id: "column10",
         center: true,
         name: "Tipo Moneda",
         wrap: true,
@@ -169,7 +184,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column10",
+        id: "column11",
         center: true,
         name: "Clave",
         wrap: true,
@@ -180,7 +195,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column11",
+        id: "column12",
         center: true,
         name: "Fecha Caducidad",
         wrap: true,
@@ -191,7 +206,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column12",
+        id: "column13",
         center: true,
         name: "Lote",
         wrap: true,
@@ -202,7 +217,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column13",
+        id: "column14",
         center: true,
         name: "Cantidad",
         wrap: true,
@@ -213,7 +228,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column14",
+        id: "column15",
         center: true,
         name: "Fecha Fabricación",
         wrap: true,
@@ -224,7 +239,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column15",
+        id: "column16",
         center: true,
         name: "Precio",
         wrap: true,
@@ -235,7 +250,7 @@ export default class HelloWorld extends React.Component<
         },
       },
       {
-        id: "column16",
+        id: "column17",
         center: true,
         name: "IVA",
         wrap: true,
@@ -252,6 +267,7 @@ export default class HelloWorld extends React.Component<
       DatosAI: [],
       Remisiones: [],
       DefTable: [],
+      filterText: "",
     };
   }
 
@@ -279,9 +295,10 @@ export default class HelloWorld extends React.Component<
             "Title",
             "ENTIDAD_FEDERATIVA",
             "RFC_LABORATORIO",
-            "FECHA_SELLO_RECEPCION"
+            "FECHA_SELLO_RECEPCION",
+            "RAZON_SOCIAL"
           )
-          .top(20)
+          .top(50)
           .getPaged();
 
         const data = items.results;
@@ -327,7 +344,7 @@ export default class HelloWorld extends React.Component<
             "Fecha_Caducidad",
             "ID_x002d_Remision"
           )
-          .top(20)
+          .top(50)
           .getPaged();
 
         const data = items.results;
@@ -360,9 +377,7 @@ export default class HelloWorld extends React.Component<
     if (this.state.DatosAI && this.state.Remisiones) {
       this.state.DatosAI.forEach((datoAI) => {
         const remFilter = this.state.Remisiones.filter((remision) => {
-          return (
-            datoAI.Title === remision.ID_x002d_Remision
-          );
+          return datoAI.Title === remision.ID_x002d_Remision;
         });
 
         const results = remFilter.reduce((x: any, y: any) => {
@@ -415,7 +430,7 @@ export default class HelloWorld extends React.Component<
       this.setState({
         DefTable: result.flat(),
       });
-      console.log(this.state.DefTable);
+      // console.log(this.state.DefTable);
     }
   };
 
@@ -430,65 +445,61 @@ export default class HelloWorld extends React.Component<
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(
         this.state.DefTable.map((item) => {
-          const OR = item.NO_ORDEN_REPOSICION_UNOPS ;
+          const OR = item.NO_ORDEN_REPOSICION_UNOPS;
           const or = OR.substring(OR.lastIndexOf("/") + 1);
           return {
-            "NO_ORDEN_REPOSICION_UNOPS":
-              item.NO_ORDEN_REPOSICION_UNOPS,
-            "OR": or,
-            "NO_REMISION": item.NO_REMISION || item.ID_x002d_Remisio,
-            "NO_LICITACION": item.NO_LICITACION,
-            "NO_CONTRATO": item.NO_CONTRATO,
+            NO_ORDEN_REPOSICION_UNOPS: item.NO_ORDEN_REPOSICION_UNOPS,
+            OR: or,
+            NO_REMISION: item.NO_REMISION || item.ID_x002d_Remisio,
+            NO_LICITACION: item.NO_LICITACION,
+            NO_CONTRATO: item.NO_CONTRATO,
             Procedencia: item.PROCEDENCIA,
-            "REGISTRO_SANITARIO":
+            REGISTRO_SANITARIO:
               item.REGISTRO_SANITARIO || item.Registro_Sanitario,
-            "MARCA": item.MARCA,
-            "TIPO_MONEDA": item.TIPO_MONEDA,
-            "CLAVE": item.CLAVE,
-            "FECHA_CADUCIDAD": item.Fecha_Caducidad,
-            "LOTE": item.Lote,
-            "CANTIDAD_RECIBIDA": item.CANTIDAD_RECIBIDA || item.Cantidad,
+            MARCA: item.MARCA,
+            TIPO_MONEDA: item.TIPO_MONEDA,
+            CLAVE: item.CLAVE,
+            FECHA_CADUCIDAD: item.Fecha_Caducidad,
+            LOTE: item.Lote,
+            CANTIDAD_RECIBIDA: item.CANTIDAD_RECIBIDA || item.Cantidad,
             "Fecha Fabricación": item.Fecha_Fabircada,
-            "PRECIO_SIN_IVA": item.PRECIO_SIN_IVA || item.Presion_sin_iva,
-            "IVA": item.IVA,
+            PRECIO_SIN_IVA: item.PRECIO_SIN_IVA || item.Presion_sin_iva,
+            IVA: item.IVA,
           };
         })
       );
       const ws2 = XLSX.utils.json_to_sheet(
         this.state.DefTable.map((item) => {
           return {
-            "CLAS_PTAL_OL":'098316150905',
-            "NO_LICITACION": item.NO_LICITACION,
-            "NO_CONTRATO": item.NO_CONTRATO,
-            "RFC_LABORATORIO":item.RFC_LABORATORIO,
-            "NO_ORDEN_REPOSICION_UNOPS":
-              item.NO_ORDEN_REPOSICION_UNOPS,
-            "FECHA_SELLO_RECEPCION": item.FECHA_SELLO_RECEPCION,
-           "CLAVE":item.CLAVE,
-            "PROCEDENCIA": item.PROCEDENCIA,
-            "REGISTRO_SANITARIO":
+            CLAS_PTAL_OL: "098316150905",
+            NO_LICITACION: item.NO_LICITACION,
+            NO_CONTRATO: item.NO_CONTRATO,
+            RFC_LABORATORIO: item.RFC_LABORATORIO,
+            NO_ORDEN_REPOSICION_UNOPS: item.NO_ORDEN_REPOSICION_UNOPS,
+            FECHA_SELLO_RECEPCION: item.FECHA_SELLO_RECEPCION,
+            CLAVE: item.CLAVE,
+            PROCEDENCIA: item.PROCEDENCIA,
+            REGISTRO_SANITARIO:
               item.REGISTRO_SANITARIO || item.Registro_Sanitario,
-            "MARCA": item.MARCA,
-            "FECHA_FABRICACION": item.Fecha_Fabircada,
-            "FECHA_CADUCIDAD": item.Fecha_Caducidad,
-            "LOTE": item.Lote,
-            "CANTIDAD_RECIBIDA": item.CANTIDAD_RECIBIDA || item.Cantidad,
-            "PRECIO_SIN_IVA": item.PRECIO_SIN_IVA || item.Presion_sin_iva,
-            "TIPO_MONEDA":item.TIPO_MONEDA
+            MARCA: item.MARCA,
+            FECHA_FABRICACION: item.Fecha_Fabircada,
+            FECHA_CADUCIDAD: item.Fecha_Caducidad,
+            LOTE: item.Lote,
+            CANTIDAD_RECIBIDA: item.CANTIDAD_RECIBIDA || item.Cantidad,
+            PRECIO_SIN_IVA: item.PRECIO_SIN_IVA || item.Presion_sin_iva,
+            TIPO_MONEDA: item.TIPO_MONEDA,
           };
         })
       );
       const ws3 = XLSX.utils.json_to_sheet(
         this.state.DefTable.map((item) => {
           return {
-            "CLAS_PTAL_OL":'098316150905',
-            "NO_ORDEN_REPOSICION_UNOPS":
-            item.NO_ORDEN_REPOSICION_UNOPS,
-            "ENTIDAD_FEDERATIVA":item.ENTIDAD_FEDERATIVA,
-            "CLAVE":item.CLAVE,
-            "CANTIDAD_RECIBIDA": item.CANTIDAD_RECIBIDA || item.Cantidad,
-            "NO_REMISION":item.NO_REMISION,
-            
+            CLAS_PTAL_OL: "098316150905",
+            NO_ORDEN_REPOSICION_UNOPS: item.NO_ORDEN_REPOSICION_UNOPS,
+            ENTIDAD_FEDERATIVA: item.ENTIDAD_FEDERATIVA,
+            CLAVE: item.CLAVE,
+            CANTIDAD_RECIBIDA: item.CANTIDAD_RECIBIDA || item.Cantidad,
+            NO_REMISION: item.NO_REMISION,
           };
         })
       );
@@ -499,18 +510,54 @@ export default class HelloWorld extends React.Component<
       XLSX.writeFile(wb, "Factura.xlsx");
     };
 
+    const handleChange = (e: any) => {
+      this.setState({
+        filterText: e.target.value,
+      });
+    };
+
+    const filteredList = this.state.DefTable.filter(
+      (item) =>
+        item.RAZON_SOCIAL &&
+        item.RAZON_SOCIAL.toLowerCase().includes(
+          this.state.filterText.toLowerCase()
+        )
+    );
+    // console.log("filtro", filteredList);
+
+    const textFieldStyles: Partial<ITextFieldStyles> = {
+      fieldGroup: { width: 300 },
+    };
+
     return (
       <section>
-        <DefaultButton
-          text="Exportar"
-          allowDisabledFocus
-          onClick={() => handleOnExport()}
-        />
+        <div
+          style={{
+            padding: "8px",
+            display: "flex",
+            alignItems: "end",
+            justifyContent: "space-between",
+          }}
+        >
+          <TextField
+            label="Buscar por Razón Social"
+            type="search"
+            value={this.state.filterText}
+            onChange={(e) => handleChange(e)}
+            styles={textFieldStyles}
+          />
+
+          <DefaultButton
+            text="Exportar"
+            allowDisabledFocus
+            onClick={() => handleOnExport()}
+          />
+        </div>
 
         <br />
         <DataTable
           columns={this.state.columns}
-          data={this.state.DefTable}
+          data={filteredList}
           pagination
         />
       </section>
