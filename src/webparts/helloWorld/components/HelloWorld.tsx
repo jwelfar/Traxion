@@ -447,6 +447,8 @@ export default class HelloWorld extends React.Component<
         this.state.DefTable.map((item) => {
           const OR = item.NO_ORDEN_REPOSICION_UNOPS;
           const or = OR.substring(OR.lastIndexOf("/") + 1);
+          let tipomoneda = item.TIPO_MONEDA?.replace('(',"");
+          tipomoneda =item.TIPO_MONEDA?.replace(')',"");
           return {
             NO_ORDEN_REPOSICION_UNOPS: item.NO_ORDEN_REPOSICION_UNOPS,
             OR: or,
@@ -457,19 +459,21 @@ export default class HelloWorld extends React.Component<
             REGISTRO_SANITARIO:
               item.REGISTRO_SANITARIO || item.Registro_Sanitario,
             MARCA: item.MARCA,
-            TIPO_MONEDA: item.TIPO_MONEDA,
+            TIPO_MONEDA: tipomoneda,
             CLAVE: item.CLAVE,
             FECHA_CADUCIDAD: item.Fecha_Caducidad,
             LOTE: item.Lote,
             CANTIDAD_RECIBIDA: item.CANTIDAD_RECIBIDA || item.Cantidad,
             "Fecha Fabricación": item.Fecha_Fabircada,
-            PRECIO_SIN_IVA: item.PRECIO_SIN_IVA || item.Presion_sin_iva,
-            IVA: item.IVA,
+            PRECIO_SIN_IVA: item.PRECIO_SIN_IVA?.replace('$',"") || item.Presion_sin_iva?.replace('$',""),
+            IVA: item.IVA == null ? '0' :item.IVA,
           };
         })
       );
       const ws2 = XLSX.utils.json_to_sheet(
         this.state.DefTable.map((item) => {
+          let tipomoneda = item.TIPO_MONEDA?.replace('(',"");
+          tipomoneda =item.TIPO_MONEDA?.replace(')',"");
           return {
             CLAS_PTAL_OL: "098316150905",
             NO_LICITACION: item.NO_LICITACION,
@@ -486,8 +490,8 @@ export default class HelloWorld extends React.Component<
             FECHA_CADUCIDAD: item.Fecha_Caducidad,
             LOTE: item.Lote,
             CANTIDAD_RECIBIDA: item.CANTIDAD_RECIBIDA || item.Cantidad,
-            PRECIO_SIN_IVA: item.PRECIO_SIN_IVA || item.Presion_sin_iva,
-            TIPO_MONEDA: item.TIPO_MONEDA,
+            PRECIO_SIN_IVA: item.PRECIO_SIN_IVA?.replace('$',"") || item.Presion_sin_iva?.replace('$',""),
+            TIPO_MONEDA: tipomoneda,
           };
         })
       );
