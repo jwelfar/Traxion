@@ -20,6 +20,7 @@
     "@pnp/sp": "^3.12.0",
     "@pnp/spfx-controls-react": "^3.12.0",
     "@pnp/spfx-property-controls": "^3.11.0",
+    "moment": "^2.29.4",
     "office-ui-fabric-react": "^7.199.1",
     "react": "17.0.1",
     "react-data-table-component": "^7.5.3",

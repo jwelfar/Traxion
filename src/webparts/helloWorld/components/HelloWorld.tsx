@@ -13,10 +13,13 @@ import {
   DefaultButton,
   TextField,
   ITextFieldStyles,
+  // DatePicker,
 } from "office-ui-fabric-react";
 import * as XLSX from "xlsx";
 import DataTable from "react-data-table-component";
+import "moment";
 
+const moment = require("moment");
 let _sp: SPFI = null;
 
 export interface IDetailsTableItem {
@@ -43,6 +46,7 @@ export interface IDetailsTableItem {
   PRECIO_SIN_IVA: string;
   IVA: string;
   ENTIDAD_FEDERATIVA: string;
+  Created: any;
 }
 
 export interface ITableState {
@@ -50,7 +54,12 @@ export interface ITableState {
   DatosAI: IDetailsTableItem[];
   Remisiones: IDetailsTableItem[];
   DefTable: any[];
-  filterText: string;
+  // RZSearch: string;
+  ClaveSearch: string;
+  datefrom: string;
+  dateto: string;
+  filteredCreateDate: any[];
+  pending: boolean;
 }
 
 export const getSP = (context?: WebPartContext): SPFI => {
@@ -260,6 +269,17 @@ export default class HelloWorld extends React.Component<
           return <span>{row.IVA}</span>;
         },
       },
+      {
+        id: "column18",
+        center: true,
+        name: "Fecha Creación",
+        wrap: true,
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          return <span>{moment(row.Created).format("DD-MM-YYYY")}</span>;
+        },
+      },
     ];
 
     this.state = {
@@ -267,7 +287,12 @@ export default class HelloWorld extends React.Component<
       DatosAI: [],
       Remisiones: [],
       DefTable: [],
-      filterText: "",
+      // RZSearch: "",
+      ClaveSearch: "",
+      datefrom: "",
+      dateto: "",
+      filteredCreateDate: [],
+      pending: true,
     };
   }
 
@@ -296,7 +321,8 @@ export default class HelloWorld extends React.Component<
             "ENTIDAD_FEDERATIVA",
             "RFC_LABORATORIO",
             "FECHA_SELLO_RECEPCION",
-            "RAZON_SOCIAL"
+            "RAZON_SOCIAL",
+            "Created"
           )
           .top(50)
           .getPaged();
@@ -434,10 +460,27 @@ export default class HelloWorld extends React.Component<
     }
   };
 
+  filteredCreateDate = (): any[] => {
+    if (this.state.datefrom !== "" && this.state.dateto !== "") {
+      return this.state.DefTable.filter((item) => {
+        const dateCreated = item.Created.slice(0, 10);
+
+        return (
+          dateCreated >= this.state.datefrom && dateCreated <= this.state.dateto
+        );
+      });
+      // console.log("filtro fecha", filteredCreateDate);
+    }
+    return this.state.DefTable;
+  };
+
   async componentDidMount(): Promise<void> {
     await this.getAIDataTable();
     await this.getRemisionDataTable();
     await this.finalDataTable();
+    this.setState({
+      pending: false,
+    });
   }
 
   public render(): React.ReactElement<IHelloWorldProps> {
@@ -512,18 +555,23 @@ export default class HelloWorld extends React.Component<
 
     const handleChange = (e: any) => {
       this.setState({
-        filterText: e.target.value,
+        ClaveSearch: e.target.value,
       });
     };
 
-    const filteredList = this.state.DefTable.filter(
+    // const filteredRZList = this.state.DefTable.filter(
+    //   (item) =>
+    //     item.RAZON_SOCIAL &&
+    //     item.RAZON_SOCIAL.toLowerCase().includes(
+    //       this.state.RZSearch.toLowerCase()
+    //     )
+    // );
+
+    const filteredClaveList = this.state.DefTable.filter(
       (item) =>
-        item.RAZON_SOCIAL &&
-        item.RAZON_SOCIAL.toLowerCase().includes(
-          this.state.filterText.toLowerCase()
-        )
+        item.CLAVE &&
+        item.CLAVE.toLowerCase().includes(this.state.ClaveSearch.toLowerCase())
     );
-    // console.log("filtro", filteredList);
 
     const textFieldStyles: Partial<ITextFieldStyles> = {
       fieldGroup: { width: 300 },
@@ -535,17 +583,62 @@ export default class HelloWorld extends React.Component<
           style={{
             padding: "8px",
             display: "flex",
-            alignItems: "end",
+            alignItems: "flex-end",
             justifyContent: "space-between",
           }}
         >
-          <TextField
+          {/* <TextField
             label="Buscar por Razón Social"
             type="search"
-            value={this.state.filterText}
+            value={this.state.RZSearch}
             onChange={(e) => handleChange(e)}
             styles={textFieldStyles}
+          /> */}
+
+          <TextField
+            label="Buscar por Clave"
+            type="search"
+            value={this.state.ClaveSearch}
+            onChange={(e) => handleChange(e)}
+            styles={textFieldStyles}
+            disabled={!!this.state.datefrom}
           />
+
+          <div
+            style={{
+              width: "300px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <TextField
+              label="Buscar por Fecha Desde"
+              type="date"
+              value={this.state.datefrom}
+              onChange={(e: any) =>
+                this.setState({
+                  datefrom: e.target.value,
+                  ClaveSearch: "",
+                })
+              }
+              disabled={!!this.state.ClaveSearch}
+            />
+
+            <TextField
+              label="Hasta"
+              type="date"
+              value={this.state.dateto}
+              onChange={(e: any) =>
+                this.setState({
+                  dateto: e.target.value,
+                  ClaveSearch: "",
+                })
+              }
+              min={this.state.datefrom}
+              disabled={!this.state.datefrom}
+            />
+          </div>
 
           <DefaultButton
             text="Exportar"
@@ -557,8 +650,13 @@ export default class HelloWorld extends React.Component<
         <br />
         <DataTable
           columns={this.state.columns}
-          data={filteredList}
+          data={
+            this.state.ClaveSearch !== ""
+              ? filteredClaveList
+              : this.filteredCreateDate()
+          }
           pagination
+          progressPending={this.state.pending}
         />
       </section>
     );
