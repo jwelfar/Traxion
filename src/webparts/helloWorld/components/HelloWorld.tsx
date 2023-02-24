@@ -53,12 +53,12 @@ export interface ITableState {
   DatosAI: IDetailsTableItem[];
   Remisiones: IDetailsTableItem[];
   DefTable: any[];
-  // RZSearch: string;
+  NumOrderSearch: string;
   ClaveSearch: string;
   datefrom: string;
   dateto: string;
-  filteredCreateDate: any[];
   pending: boolean;
+  filteredData: any[];
 }
 
 export const getSP = (context?: WebPartContext): SPFI => {
@@ -286,12 +286,12 @@ export default class HelloWorld extends React.Component<
       DatosAI: [],
       Remisiones: [],
       DefTable: [],
-      // RZSearch: "",
+      NumOrderSearch: "",
       ClaveSearch: "",
       datefrom: "",
       dateto: "",
-      filteredCreateDate: [],
       pending: true,
+      filteredData: [],
     };
   }
 
@@ -459,18 +459,50 @@ export default class HelloWorld extends React.Component<
     }
   };
 
-  filteredCreateDate = (): any[] => {
-    if (this.state.datefrom !== "" && this.state.dateto !== "") {
-      return this.state.DefTable.filter((item) => {
-        const dateCreated = item.Created.slice(0, 10);
-
-        return (
-          dateCreated >= this.state.datefrom && dateCreated <= this.state.dateto
-        );
+  handleFilter = (): void => {
+    if (
+      this.state.ClaveSearch === "" &&
+      this.state.NumOrderSearch === "" &&
+      this.state.datefrom === "" &&
+      this.state.dateto === ""
+    ) {
+      this.setState({
+        filteredData: this.state.DefTable,
       });
-      // console.log("filtro fecha", filteredCreateDate);
+    } else {
+      this.setState({
+        filteredData: this.state.DefTable.filter((item) => {
+          if (this.state.datefrom !== "" && this.state.dateto !== "") {
+            const dateCreated = item.Created.slice(0, 10);
+            // console.log("fecha", this.state.datefrom, this.state.dateto);
+            if (
+              dateCreated >= this.state.datefrom &&
+              dateCreated <= this.state.dateto
+            )
+              return true;
+          }
+          if (this.state.NumOrderSearch !== "") {
+            if (
+              item.NO_ORDEN_REPOSICION_UNOPS &&
+              item.NO_ORDEN_REPOSICION_UNOPS.toUpperCase().includes(
+                this.state.NumOrderSearch.toUpperCase()
+              )
+            )
+              return true;
+          }
+          if (this.state.ClaveSearch !== "") {
+            if (
+              item.CLAVE &&
+              item.CLAVE.toLowerCase().includes(
+                this.state.ClaveSearch.toLowerCase()
+              )
+            )
+              return true;
+          }
+          return false;
+        }),
+      });
     }
-    return this.state.DefTable;
   };
 
   async componentDidMount(): Promise<void> {
@@ -480,13 +512,14 @@ export default class HelloWorld extends React.Component<
     this.setState({
       pending: false,
     });
+    this.handleFilter();
   }
 
   public render(): React.ReactElement<IHelloWorldProps> {
-    const handleOnExport = () => {
+    const handleOnExport = (): void => {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(
-        this.state.DefTable.map((item) => {
+        this.state.filteredData.map((item) => {
           const OR = item.NO_ORDEN_REPOSICION_UNOPS;
           const or = OR.substring(OR.lastIndexOf("/") + 1);
           let tipomoneda = item.TIPO_MONEDA?.replace("(", "");
@@ -515,7 +548,7 @@ export default class HelloWorld extends React.Component<
         })
       );
       const ws2 = XLSX.utils.json_to_sheet(
-        this.state.DefTable.map((item) => {
+        this.state.filteredData.map((item) => {
           let tipomoneda = item.TIPO_MONEDA?.replace("(", "");
           tipomoneda = item.TIPO_MONEDA?.replace(")", "");
           return {
@@ -542,7 +575,7 @@ export default class HelloWorld extends React.Component<
         })
       );
       const ws3 = XLSX.utils.json_to_sheet(
-        this.state.DefTable.map((item) => {
+        this.state.filteredData.map((item) => {
           return {
             CLAS_PTAL_OL: "098316150905",
             NO_ORDEN_REPOSICION_UNOPS: item.NO_ORDEN_REPOSICION_UNOPS,
@@ -560,26 +593,6 @@ export default class HelloWorld extends React.Component<
       XLSX.writeFile(wb, "Factura.xlsx");
     };
 
-    const handleChange = (e: any) => {
-      this.setState({
-        ClaveSearch: e.target.value,
-      });
-    };
-
-    // const filteredRZList = this.state.DefTable.filter(
-    //   (item) =>
-    //     item.RAZON_SOCIAL &&
-    //     item.RAZON_SOCIAL.toLowerCase().includes(
-    //       this.state.RZSearch.toLowerCase()
-    //     )
-    // );
-
-    const filteredClaveList = this.state.DefTable.filter(
-      (item) =>
-        item.CLAVE &&
-        item.CLAVE.toLowerCase().includes(this.state.ClaveSearch.toLowerCase())
-    );
-
     const textFieldStyles: Partial<ITextFieldStyles> = {
       fieldGroup: { width: 300 },
     };
@@ -592,23 +605,41 @@ export default class HelloWorld extends React.Component<
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
+            flexWrap: "wrap",
           }}
         >
-          {/* <TextField
-            label="Buscar por Razón Social"
+          <TextField
+            label="Buscar por Número de Orden"
             type="search"
-            value={this.state.RZSearch}
-            onChange={(e) => handleChange(e)}
+            value={this.state.NumOrderSearch}
+            onChange={(e) => {
+              this.setState(
+                {
+                  NumOrderSearch: (e.target as HTMLInputElement).value,
+                },
+                () => {
+                  this.handleFilter();
+                }
+              );
+            }}
             styles={textFieldStyles}
-          /> */}
+          />
 
           <TextField
             label="Buscar por Clave"
             type="search"
             value={this.state.ClaveSearch}
-            onChange={(e) => handleChange(e)}
+            onChange={(e) => {
+              this.setState(
+                {
+                  ClaveSearch: (e.target as HTMLInputElement).value,
+                },
+                () => {
+                  this.handleFilter();
+                }
+              );
+            }}
             styles={textFieldStyles}
-            disabled={!!this.state.datefrom}
           />
 
           <div
@@ -623,25 +654,32 @@ export default class HelloWorld extends React.Component<
               label="Buscar por Fecha Desde"
               type="date"
               value={this.state.datefrom}
-              onChange={(e: any) =>
-                this.setState({
-                  datefrom: e.target.value,
-                  ClaveSearch: "",
-                })
-              }
-              disabled={!!this.state.ClaveSearch}
+              onChange={(e) => {
+                this.setState(
+                  {
+                    datefrom: (e.target as HTMLInputElement).value,
+                  },
+                  () => {
+                    this.handleFilter();
+                  }
+                );
+              }}
             />
 
             <TextField
               label="Hasta"
               type="date"
               value={this.state.dateto}
-              onChange={(e: any) =>
-                this.setState({
-                  dateto: e.target.value,
-                  ClaveSearch: "",
-                })
-              }
+              onChange={(e) => {
+                this.setState(
+                  {
+                    dateto: (e.target as HTMLInputElement).value,
+                  },
+                  () => {
+                    this.handleFilter();
+                  }
+                );
+              }}
               min={this.state.datefrom}
               disabled={!this.state.datefrom}
             />
@@ -657,11 +695,7 @@ export default class HelloWorld extends React.Component<
         <br />
         <DataTable
           columns={this.state.columns}
-          data={
-            this.state.ClaveSearch !== ""
-              ? filteredClaveList
-              : this.filteredCreateDate()
-          }
+          data={this.state.filteredData}
           pagination
           progressPending={this.state.pending}
         />
