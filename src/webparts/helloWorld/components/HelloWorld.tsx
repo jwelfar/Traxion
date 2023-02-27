@@ -13,6 +13,7 @@ import {
   DefaultButton,
   TextField,
   ITextFieldStyles,
+  Link,
 } from "office-ui-fabric-react";
 import * as XLSX from "xlsx";
 import DataTable from "react-data-table-component";
@@ -55,6 +56,7 @@ export interface ITableState {
   DefTable: any[];
   NumOrderSearch: string;
   ClaveSearch: string;
+  LoteSearch: string;
   datefrom: string;
   dateto: string;
   pending: boolean;
@@ -279,6 +281,24 @@ export default class HelloWorld extends React.Component<
           return <span>{moment(row.Created).format("DD-MM-YYYY")}</span>;
         },
       },
+      {
+        id: "column19",
+        center: true,
+        name: "Archivo",
+        minWidth: "150px",
+        maxWidth: "300px",
+        selector: (row: any) => {
+          const file = row.LinkTitle.substring(
+            row.LinkTitle.lastIndexOf("/") + 1
+          );
+
+          return (
+            <Link href={row.LinkTitle} target="_blank">
+              {file}
+            </Link>
+          );
+        },
+      },
     ];
 
     this.state = {
@@ -288,6 +308,7 @@ export default class HelloWorld extends React.Component<
       DefTable: [],
       NumOrderSearch: "",
       ClaveSearch: "",
+      LoteSearch: "",
       datefrom: "",
       dateto: "",
       pending: true,
@@ -321,7 +342,8 @@ export default class HelloWorld extends React.Component<
             "RFC_LABORATORIO",
             "FECHA_SELLO_RECEPCION",
             "RAZON_SOCIAL",
-            "Created"
+            "Created",
+            "LinkTitle"
           )
           .top(50)
           .getPaged();
@@ -454,43 +476,7 @@ export default class HelloWorld extends React.Component<
       });
       this.setState({
         DefTable: result.flat(),
-        filteredData: result.flat(),
       });
-      // console.log(this.state.DefTable);
-    }
-  };
-
-  validateDate = (invoice: any): boolean => {
-    if (this.state.datefrom !== "" && this.state.dateto !== "") {
-      const dateCreated = invoice.Created.slice(0, 10);
-      const dateRange =
-        this.state.datefrom <= dateCreated && this.state.dateto >= dateCreated;
-      if (dateRange) return true;
-      else return false;
-    }
-  };
-
-  validateNumOrder = (invoice: any): boolean => {
-    if (this.state.NumOrderSearch !== "") {
-      if (
-        invoice.NO_ORDEN_REPOSICION_UNOPS &&
-        invoice.NO_ORDEN_REPOSICION_UNOPS.toUpperCase().includes(
-          this.state.NumOrderSearch.toUpperCase()
-        )
-      )
-        return true;
-    }
-  };
-
-  validateClave = (invoice: any): boolean => {
-    if (this.state.ClaveSearch !== "") {
-      if (
-        invoice.CLAVE &&
-        invoice.CLAVE.toLowerCase().includes(
-          this.state.ClaveSearch.toLowerCase()
-        )
-      )
-        return true;
     }
   };
 
@@ -498,6 +484,7 @@ export default class HelloWorld extends React.Component<
     if (
       this.state.ClaveSearch === "" &&
       this.state.NumOrderSearch === "" &&
+      this.state.LoteSearch === "" &&
       this.state.datefrom === "" &&
       this.state.dateto === ""
     ) {
@@ -505,60 +492,172 @@ export default class HelloWorld extends React.Component<
         filteredData: this.state.DefTable,
       });
     } else {
-      let resultFilter = [];
-      if (this.state.ClaveSearch) {
-        resultFilter = this.state.DefTable.filter((item) =>
-          this.validateClave(item)
-        );
-      }
-      if (this.state.NumOrderSearch) {
-        resultFilter = this.state.DefTable.filter((item) =>
-          this.validateNumOrder(item)
-        );
-      }
-      if (this.state.datefrom && this.state.dateto) {
-        resultFilter = this.state.DefTable.filter((item) =>
-          this.validateDate(item)
-        );
-      }
-
       this.setState({
         filteredData: this.state.DefTable.filter((item) => {
-          if(this.state.ClaveSearch && this.state.NumOrderSearch){
-            return (item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0 ) &&  
-            item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0
-          } 
-          if(this.state.ClaveSearch && this.state.datefrom){
-            return this._filterByDateRange(item) &&   
-            item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0 
-          } 
-          if(this.state.NumOrderSearch && this.state.datefrom){
-            return this._filterByDateRange(item) &&
-            item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0
-          } 
-          if(this.state.NumOrderSearch && this.state.datefrom && this.state.datefrom){
-            return this._filterByDateRange(item) &&   
-            item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0 &&  item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0
-          } 
-          if(this.state.NumOrderSearch){
-            
-            return item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0
-          } 
-          if(this.state.ClaveSearch ){
-            return 
-            item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0 
-          } 
-          if( this.state.datefrom){
-            return this._filterByDateRange(item) 
-          } 
-
-          })
-         
-            })
+          if (
+            this.state.ClaveSearch &&
+            this.state.NumOrderSearch &&
+            this.state.LoteSearch &&
+            this.state.datefrom
+          ) {
+            return (
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0 &&
+              item?.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0 &&
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0 &&
+              this._filterByDateRange(item)
+            );
+          }
+          if (
+            this.state.ClaveSearch &&
+            this.state.NumOrderSearch &&
+            this.state.LoteSearch
+          ) {
+            return (
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0 &&
+              item?.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0 &&
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (
+            this.state.NumOrderSearch &&
+            this.state.datefrom &&
+            this.state.ClaveSearch
+          ) {
+            return (
+              this._filterByDateRange(item) &&
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0 &&
+              item?.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (
+            this.state.NumOrderSearch &&
+            this.state.datefrom &&
+            this.state.LoteSearch
+          ) {
+            return (
+              this._filterByDateRange(item) &&
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0 &&
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (
+            this.state.ClaveSearch &&
+            this.state.datefrom &&
+            this.state.LoteSearch
+          ) {
+            return (
+              this._filterByDateRange(item) &&
+              item.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0 &&
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.ClaveSearch && this.state.NumOrderSearch) {
+            return (
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0 &&
+              item?.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.LoteSearch && this.state.ClaveSearch) {
+            return (
+              item.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0 &&
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.LoteSearch && this.state.NumOrderSearch) {
+            return (
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0 &&
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.ClaveSearch && this.state.datefrom) {
+            return (
+              this._filterByDateRange(item) &&
+              item?.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.NumOrderSearch && this.state.datefrom) {
+            return (
+              this._filterByDateRange(item) &&
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0
+            );
+          }
+          if (this.state.LoteSearch && this.state.datefrom) {
+            return (
+              this._filterByDateRange(item) &&
+              item.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.NumOrderSearch) {
+            return (
+              item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(
+                this.state.NumOrderSearch.toUpperCase()
+              ) >= 0
+            );
+          }
+          if (this.state.ClaveSearch) {
+            return (
+              item?.CLAVE?.toLowerCase().indexOf(
+                this.state.ClaveSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.LoteSearch) {
+            return (
+              item?.Lote?.toLowerCase().indexOf(
+                this.state.LoteSearch.toLowerCase()
+              ) >= 0
+            );
+          }
+          if (this.state.datefrom) {
+            return this._filterByDateRange(item);
+          }
+        }),
+      });
     }
-    
-      };
-   
+  };
+
   private _filterByDateRange = (item: any): boolean => {
     if (!this.state.datefrom && !this.state.dateto) {
       return true;
@@ -572,9 +671,11 @@ export default class HelloWorld extends React.Component<
       return item.Created.slice(0, 10) <= this.state.dateto;
     }
 
-    return item.Created.slice(0, 10) >= this.state.datefrom && item.Created.slice(0, 10) <= this.state.dateto;
-  }
-
+    return (
+      item.Created.slice(0, 10) >= this.state.datefrom &&
+      item.Created.slice(0, 10) <= this.state.dateto
+    );
+  };
 
   async componentDidMount(): Promise<void> {
     await this.getAIDataTable();
@@ -704,6 +805,23 @@ export default class HelloWorld extends React.Component<
               this.setState(
                 {
                   ClaveSearch: (e.target as HTMLInputElement).value,
+                },
+                () => {
+                  this.handleFilter();
+                }
+              );
+            }}
+            styles={textFieldStyles}
+          />
+
+          <TextField
+            label="Buscar por Lote"
+            type="search"
+            value={this.state.LoteSearch}
+            onChange={(e) => {
+              this.setState(
+                {
+                  LoteSearch: (e.target as HTMLInputElement).value,
                 },
                 () => {
                   this.handleFilter();
