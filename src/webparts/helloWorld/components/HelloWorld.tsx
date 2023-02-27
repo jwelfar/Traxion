@@ -472,38 +472,57 @@ export default class HelloWorld extends React.Component<
     } else {
       this.setState({
         filteredData: this.state.DefTable.filter((item) => {
-          if (this.state.datefrom !== "" && this.state.dateto !== "") {
-            const dateCreated = item.Created.slice(0, 10);
-            // console.log("fecha", this.state.datefrom, this.state.dateto);
-            if (
-              dateCreated >= this.state.datefrom &&
-              dateCreated <= this.state.dateto
-            )
-              return true;
-          }
-          if (this.state.NumOrderSearch !== "") {
-            if (
-              item.NO_ORDEN_REPOSICION_UNOPS &&
-              item.NO_ORDEN_REPOSICION_UNOPS.toUpperCase().includes(
-                this.state.NumOrderSearch.toUpperCase()
-              )
-            )
-              return true;
-          }
-          if (this.state.ClaveSearch !== "") {
-            if (
-              item.CLAVE &&
-              item.CLAVE.toLowerCase().includes(
-                this.state.ClaveSearch.toLowerCase()
-              )
-            )
-              return true;
-          }
-          return false;
-        }),
-      });
+          if(this.state.ClaveSearch && this.state.NumOrderSearch){
+            return (item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0 ) &&  
+            item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0
+          } 
+          if(this.state.ClaveSearch && this.state.datefrom){
+            return this._filterByDateRange(item) &&   
+            item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0 
+          } 
+          if(this.state.NumOrderSearch && this.state.datefrom){
+            return this._filterByDateRange(item) &&
+            item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0
+          } 
+          if(this.state.NumOrderSearch && this.state.datefrom && this.state.datefrom){
+            return this._filterByDateRange(item) &&   
+            item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0 &&  item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0
+          } 
+          if(this.state.NumOrderSearch){
+            
+            return item.NO_ORDEN_REPOSICION_UNOPS?.toUpperCase().indexOf(this.state.NumOrderSearch.toUpperCase())>=0
+          } 
+          if(this.state.ClaveSearch ){
+            return 
+            item?.CLAVE?.toLowerCase().indexOf(this.state.ClaveSearch.toLowerCase())>=0 
+          } 
+          if( this.state.datefrom){
+            return this._filterByDateRange(item) 
+          } 
+
+          })
+         
+            })
     }
-  };
+    
+      };
+   
+  private _filterByDateRange = (item: any): boolean => {
+    if (!this.state.datefrom && !this.state.dateto) {
+      return true;
+    }
+
+    if (this.state.datefrom && !this.state.dateto) {
+      return item.Created.slice(0, 10) >= this.state.datefrom;
+    }
+
+    if (!this.state.datefrom && this.state.dateto) {
+      return item.Created.slice(0, 10) <= this.state.dateto;
+    }
+
+    return item.Created.slice(0, 10) >= this.state.datefrom && item.Created.slice(0, 10) <= this.state.dateto;
+  }
+
 
   async componentDidMount(): Promise<void> {
     await this.getAIDataTable();
@@ -521,7 +540,7 @@ export default class HelloWorld extends React.Component<
       const ws = XLSX.utils.json_to_sheet(
         this.state.filteredData.map((item) => {
           const OR = item.NO_ORDEN_REPOSICION_UNOPS;
-          const or = OR.substring(OR.lastIndexOf("/") + 1);
+          const or = OR?.substring(OR.lastIndexOf("/") + 1);
           let tipomoneda = item.TIPO_MONEDA?.replace("(", "");
           tipomoneda = item.TIPO_MONEDA?.replace(")", "");
           return {

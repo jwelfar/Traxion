@@ -5,14 +5,12 @@
     "id": "1637cff0-4234-4094-9019-0054adfb7d75",
     "version": "1.0.0.0",
     "includeClientSideAssets": true,
-    "skipFeatureDeployment": true,
-    "isDomainIsolated": false,
     "developer": {
       "name": "",
       "websiteUrl": "",
       "privacyUrl": "",
       "termsOfUseUrl": "",
-      "mpnId": "Undefined-1.16.1"
+      "mpnId": ""
     },
     "metadata": {
       "shortDescription": {
@@ -20,10 +18,7 @@
       },
       "longDescription": {
         "default": "dps description"
-      },
-      "screenshotPaths": [],
-      "videoUrl": "",
-      "categories": []
+      }
     },
     "features": [
       {
