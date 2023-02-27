@@ -454,8 +454,43 @@ export default class HelloWorld extends React.Component<
       });
       this.setState({
         DefTable: result.flat(),
+        filteredData: result.flat(),
       });
       // console.log(this.state.DefTable);
+    }
+  };
+
+  validateDate = (invoice: any): boolean => {
+    if (this.state.datefrom !== "" && this.state.dateto !== "") {
+      const dateCreated = invoice.Created.slice(0, 10);
+      const dateRange =
+        this.state.datefrom <= dateCreated && this.state.dateto >= dateCreated;
+      if (dateRange) return true;
+      else return false;
+    }
+  };
+
+  validateNumOrder = (invoice: any): boolean => {
+    if (this.state.NumOrderSearch !== "") {
+      if (
+        invoice.NO_ORDEN_REPOSICION_UNOPS &&
+        invoice.NO_ORDEN_REPOSICION_UNOPS.toUpperCase().includes(
+          this.state.NumOrderSearch.toUpperCase()
+        )
+      )
+        return true;
+    }
+  };
+
+  validateClave = (invoice: any): boolean => {
+    if (this.state.ClaveSearch !== "") {
+      if (
+        invoice.CLAVE &&
+        invoice.CLAVE.toLowerCase().includes(
+          this.state.ClaveSearch.toLowerCase()
+        )
+      )
+        return true;
     }
   };
 
@@ -470,38 +505,56 @@ export default class HelloWorld extends React.Component<
         filteredData: this.state.DefTable,
       });
     } else {
+      let resultFilter = [];
+      if (this.state.ClaveSearch) {
+        resultFilter = this.state.DefTable.filter((item) =>
+          this.validateClave(item)
+        );
+      }
+      if (this.state.NumOrderSearch) {
+        resultFilter = this.state.DefTable.filter((item) =>
+          this.validateNumOrder(item)
+        );
+      }
+      if (this.state.datefrom && this.state.dateto) {
+        resultFilter = this.state.DefTable.filter((item) =>
+          this.validateDate(item)
+        );
+      }
+
       this.setState({
-        filteredData: this.state.DefTable.filter((item) => {
-          if (this.state.datefrom !== "" && this.state.dateto !== "") {
-            const dateCreated = item.Created.slice(0, 10);
-            // console.log("fecha", this.state.datefrom, this.state.dateto);
-            if (
-              dateCreated >= this.state.datefrom &&
-              dateCreated <= this.state.dateto
-            )
-              return true;
-          }
-          if (this.state.NumOrderSearch !== "") {
-            if (
-              item.NO_ORDEN_REPOSICION_UNOPS &&
-              item.NO_ORDEN_REPOSICION_UNOPS.toUpperCase().includes(
-                this.state.NumOrderSearch.toUpperCase()
-              )
-            )
-              return true;
-          }
-          if (this.state.ClaveSearch !== "") {
-            if (
-              item.CLAVE &&
-              item.CLAVE.toLowerCase().includes(
-                this.state.ClaveSearch.toLowerCase()
-              )
-            )
-              return true;
-          }
-          return false;
-        }),
+        filteredData: resultFilter,
       });
+      // this.setState({
+      //   filteredData: this.state.DefTable.filter((item) => {
+      //     if (this.state.datefrom !== "" && this.state.dateto !== "") {
+      //       const dateCreated = item.Created.slice(0, 10);
+      //       const dateRange =
+      //         this.state.datefrom <= dateCreated &&
+      //         this.state.dateto >= dateCreated;
+      //       if (dateRange) return true;
+      //     }
+      //     if (this.state.NumOrderSearch !== "") {
+      //       if (
+      //         item.NO_ORDEN_REPOSICION_UNOPS &&
+      //         item.NO_ORDEN_REPOSICION_UNOPS.toUpperCase().includes(
+      //           this.state.NumOrderSearch.toUpperCase()
+      //         )
+      //       )
+      //         return true;
+      //     }
+      //     if (this.state.ClaveSearch !== "") {
+      //       if (
+      //         item.CLAVE &&
+      //         item.CLAVE.toLowerCase().includes(
+      //           this.state.ClaveSearch.toLowerCase()
+      //         )
+      //       )
+      //         return true;
+      //     }
+      //     return false;
+      //   }),
+      // });
     }
   };
 
@@ -543,7 +596,7 @@ export default class HelloWorld extends React.Component<
             PRECIO_SIN_IVA:
               item.PRECIO_SIN_IVA?.replace("$", "") ||
               item.Presion_sin_iva?.replace("$", ""),
-            IVA: item.IVA == null ? "0" : item.IVA,
+            IVA: item.IVA === null ? "0" : item.IVA,
           };
         })
       );
