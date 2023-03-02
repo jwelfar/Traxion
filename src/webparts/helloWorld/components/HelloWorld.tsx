@@ -14,6 +14,8 @@ import {
   TextField,
   ITextFieldStyles,
   Link,
+  Spinner,
+  SpinnerSize,
 } from "office-ui-fabric-react";
 import * as XLSX from "xlsx";
 import DataTable from "react-data-table-component";
@@ -61,6 +63,7 @@ export interface ITableState {
   dateto: string;
   pending: boolean;
   filteredData: any[];
+  loading:any;
 }
 
 export const getSP = (context?: WebPartContext): SPFI => {
@@ -313,10 +316,48 @@ export default class HelloWorld extends React.Component<
       dateto: "",
       pending: true,
       filteredData: [],
+      loading:false
     };
+    
   }
 
   private async getAIDataTable(): Promise<void> {
+    this.setState({
+      loading:true
+    });
+    let query= "";
+    if(this.state.ClaveSearch){
+      if(query.length==0){
+
+         query= "substringof('"+this.state.ClaveSearch+"', CLAVE)";
+      }
+     
+    }
+    if(this.state.NumOrderSearch){
+      if(query.length==0){
+      query="substringof('"+this.state.NumOrderSearch+"', NO_ORDEN_REPOSICION_UNOPS)";
+      }
+      else{
+        query+=" && substringof('"+this.state.NumOrderSearch+"', NO_ORDEN_REPOSICION_UNOPS)";
+      }
+    }
+    if(this.state.dateto){
+      if(query.length==0){
+      query="Created gt "+this.state.dateto
+      if(this.state.datefrom)
+      {
+        query=" && Created gt "+this.state.datefrom
+      }
+      }
+      else{
+        query+=" && Created gt "+this.state.dateto
+        if(this.state.datefrom)
+          {
+            query=" && Created Le "+this.state.datefrom
+          }
+         }
+      }
+   
     let items: any = [];
     let response: any = [];
     if (this.props.DatosAI) {
@@ -345,7 +386,7 @@ export default class HelloWorld extends React.Component<
             "Created",
             "LinkTitle"
           )
-          .top(50)
+          .top(50).filter(query) 
           .getPaged();
 
         const data = items.results;
@@ -366,6 +407,9 @@ export default class HelloWorld extends React.Component<
 
         return response;
       } catch (err) {
+        this.setState({
+          loading:false
+        });
         console.log("Error", err);
         err.res.json().then(() => {
           console.log("Failed to get list items!", err);
@@ -375,12 +419,33 @@ export default class HelloWorld extends React.Component<
   }
 
   private async getRemisionDataTable(): Promise<void> {
+    let query= "";
+    if(this.state.LoteSearch){
+        query="Lote eq "+this.state.LoteSearch;
+      }
+      
     let items: any = [];
     let response: any = [];
     if (this.props.Remisiones) {
       try {
         let next = true;
+        if(this.state.LoteSearch){
         items = await getSP(this.props.context)
+          .web.lists.getById(this.props.Remisiones.id)
+          .items.select(
+            "Lote",
+            "Registro_Sanitario",
+            "Presion_sin_iva",
+            "Cantidad",
+            "Fecha_Fabircada",
+            "Fecha_Caducidad",
+            "ID_x002d_Remision"
+          )
+          .top(50).filter(query)
+          .getPaged();
+        }
+        else{
+          items = await getSP(this.props.context)
           .web.lists.getById(this.props.Remisiones.id)
           .items.select(
             "Lote",
@@ -393,7 +458,7 @@ export default class HelloWorld extends React.Component<
           )
           .top(50)
           .getPaged();
-
+        }
         const data = items.results;
         response = response.concat(data);
 
@@ -411,6 +476,9 @@ export default class HelloWorld extends React.Component<
 
         return response;
       } catch (err) {
+        this.setState({
+          loading:false
+        });
         console.log("Error", err);
         err.res.json().then(() => {
           console.log("Failed to get list items!", err);
@@ -475,13 +543,27 @@ export default class HelloWorld extends React.Component<
         );
       });
       this.setState({
-        DefTable: result.flat(),
+        filteredData: result.flat(),
+      });
+      this.setState({
+        loading:false
       });
     }
   };
 
-  handleFilter = (): void => {
-    if (
+  handleFilter = async (): Promise<void> => {
+    this.setState({
+      filteredData: [],
+    });
+   await this.getAIDataTable().then(async () => {
+     await  this.getRemisionDataTable().then(async ()=>{
+      await this.finalDataTable();
+    });
+  }); 
+};
+  
+ 
+  /*  if (
       this.state.ClaveSearch === "" &&
       this.state.NumOrderSearch === "" &&
       this.state.LoteSearch === "" &&
@@ -655,10 +737,10 @@ export default class HelloWorld extends React.Component<
           }
         }),
       });
-    }
-  };
+    }*/
+  //};
 
-  private _filterByDateRange = (item: any): boolean => {
+ /* private _filterByDateRange = (item: any): boolean => {
     if (!this.state.datefrom && !this.state.dateto) {
       return true;
     }
@@ -675,16 +757,16 @@ export default class HelloWorld extends React.Component<
       item.Created.slice(0, 10) >= this.state.datefrom &&
       item.Created.slice(0, 10) <= this.state.dateto
     );
-  };
+  };*/
 
   async componentDidMount(): Promise<void> {
-    await this.getAIDataTable();
+   /* await this.getAIDataTable();
     await this.getRemisionDataTable();
-    await this.finalDataTable();
+    await this.finalDataTable();*/
     this.setState({
       pending: false,
     });
-    this.handleFilter();
+    //this.handleFilter();
   }
 
   public render(): React.ReactElement<IHelloWorldProps> {
@@ -780,6 +862,7 @@ export default class HelloWorld extends React.Component<
             flexWrap: "wrap",
           }}
         >
+         
           <TextField
             label="Buscar por Número de Orden"
             type="search"
@@ -882,12 +965,20 @@ export default class HelloWorld extends React.Component<
         </div>
 
         <br />
-        <DataTable
+        {
+          this.state.loading &&
+          <Spinner label="Loading items..." size={SpinnerSize.large} />
+        }
+          {
+          !this.state.loading &&
+          <DataTable
           columns={this.state.columns}
           data={this.state.filteredData}
           pagination
           progressPending={this.state.pending}
         />
+        }
+        
       </section>
     );
   }
