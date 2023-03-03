@@ -19,9 +19,9 @@ import {
 } from "office-ui-fabric-react";
 import * as XLSX from "xlsx";
 import DataTable from "react-data-table-component";
-import "moment";
+import * as moment from "moment";
 
-const moment = require("moment");
+
 let _sp: SPFI = null;
 
 export interface IDetailsTableItem {
@@ -270,13 +270,13 @@ export default class HelloWorld extends React.Component<
         minWidth: "150px",
         maxWidth: "300px",
         selector: (row: any) => {
-          return <span>{row.IVA}</span>;
+          return <span>{row.IVA===null? "0":row.IVA}</span>;
         },
       },
       {
         id: "column18",
         center: true,
-        name: "Fecha Creación",
+        name: "Fecha digitalización",
         wrap: true,
         minWidth: "150px",
         maxWidth: "300px",
@@ -326,43 +326,46 @@ export default class HelloWorld extends React.Component<
       loading:true
     });
     let query= "";
-    if(this.state.ClaveSearch){
-      if(query.length==0){
+    if(this.state.ClaveSearch.length>=5){
+      if(query.length===0){
 
          query= "substringof('"+this.state.ClaveSearch+"', CLAVE)";
       }
      
     }
-    if(this.state.NumOrderSearch){
-      if(query.length==0){
+    if(this.state.NumOrderSearch.length>=5){
+      if(query.length===0){
       query="substringof('"+this.state.NumOrderSearch+"', NO_ORDEN_REPOSICION_UNOPS)";
       }
       else{
-        query+=" && substringof('"+this.state.NumOrderSearch+"', NO_ORDEN_REPOSICION_UNOPS)";
+        query+=" and substringof('"+this.state.NumOrderSearch+"', NO_ORDEN_REPOSICION_UNOPS)";
       }
     }
-    if(this.state.dateto){
-      if(query.length==0){
-      query="Created gt "+this.state.dateto
-      if(this.state.datefrom)
+    let items: any = [];
+    let response: any = [];
+    
+    if(this.state.datefrom){
+      if(query.length===0){
+      query=("Created ge datetime'"+this.state.datefrom+"T00:00:00'");
+      if(this.state.dateto)
       {
-        query=" && Created gt "+this.state.datefrom
+        query+=(" and Created le datetime'"+this.state.dateto+"T00:00:00'");
       }
       }
       else{
-        query+=" && Created gt "+this.state.dateto
-        if(this.state.datefrom)
+        query+=(" and Created ge datetime'"+this.state.datefrom+"T00:00:00'");
+        if(this.state.dateto)
           {
-            query=" && Created Le "+this.state.datefrom
+            query+=(" and Created le datetime'"+this.state.dateto+"T00:00:00'");
           }
          }
       }
-   
-    let items: any = [];
-    let response: any = [];
+      
+    
     if (this.props.DatosAI) {
       try {
         let next = true;
+        if(query.length>0){
         items = await getSP(this.props.context)
           .web.lists.getById(this.props.DatosAI.id)
           .items.select(
@@ -388,7 +391,34 @@ export default class HelloWorld extends React.Component<
           )
           .top(50).filter(query) 
           .getPaged();
-
+          }
+          else{
+            items = await getSP(this.props.context)
+            .web.lists.getById(this.props.DatosAI.id)
+            .items.select(
+              "NO_ORDEN_REPOSICION_UNOPS",
+              "NO_REMISION",
+              "NO_LICITACION",
+              "NO_CONTRATO",
+              "PROCEDENCIA",
+              "MARCA",
+              "TIPO_MONEDA",
+              "CLAVE",
+              "IVA",
+              "REGISTRO_SANITARIO",
+              "CANTIDAD_RECIBIDA",
+              "PRECIO_SIN_IVA",
+              "Title",
+              "ENTIDAD_FEDERATIVA",
+              "RFC_LABORATORIO",
+              "FECHA_SELLO_RECEPCION",
+              "RAZON_SOCIAL",
+              "Created",
+              "LinkTitle"
+            )
+            .top(50)
+            .getPaged();
+          }
         const data = items.results;
         response = response.concat(data);
 
@@ -420,8 +450,9 @@ export default class HelloWorld extends React.Component<
 
   private async getRemisionDataTable(): Promise<void> {
     let query= "";
-    if(this.state.LoteSearch){
-        query="Lote eq "+this.state.LoteSearch;
+    if(this.state.LoteSearch.length>=3){
+      query="substringof('"+this.state.LoteSearch+"',Lote)";
+   
       }
       
     let items: any = [];
@@ -555,11 +586,14 @@ export default class HelloWorld extends React.Component<
     this.setState({
       filteredData: [],
     });
+
+    setTimeout(async () => 
    await this.getAIDataTable().then(async () => {
      await  this.getRemisionDataTable().then(async ()=>{
       await this.finalDataTable();
     });
-  }); 
+  }), 3000);
+
 };
   
  
