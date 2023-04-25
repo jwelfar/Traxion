@@ -9,6 +9,9 @@
     font-family: $ms-font-family-fallbacks;
   }
 }
+.redalert{
+  background: red;
+}
 
 .welcome {
   text-align: center;
@@ -30,15 +33,5 @@
       color: "[theme:linkHovered, default: #014446]";
       color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
     }
-  }
-}
-:global {
-  #workbenchPageContent,
-  .CanvasComponent.LCS .CanvasZone {
-   
-    max-width: 100% !important;
-  }
-  .CanvasZone > div {
-    max-width: none !important;
   }
 }

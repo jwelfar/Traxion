@@ -17,6 +17,9 @@ export interface IHelloWorldWebPartProps {
   description: string;
   Remisiones: any;
   DatosAI: any;
+  ListCheck:any;
+  Tablareglas:any;
+  ListaValidaciom:any;
 }
 
 export default class HelloWorldWebPart extends BaseClientSideWebPart<IHelloWorldWebPartProps> {
@@ -24,10 +27,13 @@ export default class HelloWorldWebPart extends BaseClientSideWebPart<IHelloWorld
     const element: React.ReactElement<IHelloWorldProps> = React.createElement(
       HelloWorld,
       {
+        Tablareglas:this.properties.Tablareglas,
         description: this.properties.description,
         context: this.context,
         Remisiones: this.properties.Remisiones,
         DatosAI: this.properties.DatosAI,
+        ListCheck:this.properties.ListCheck,
+        ListaValidaciom:this.properties.ListaValidaciom
       }
     );
 
@@ -84,6 +90,45 @@ export default class HelloWorldWebPart extends BaseClientSideWebPart<IHelloWorld
                   context: this.context as any,
                   deferredValidationTime: 0,
                   key: "listPickerFieldId1",
+                }),
+                PropertyFieldListPicker("ListCheck", {
+                  label: "Selecciona la lista de ListCheck",
+                  selectedList: this.properties.ListCheck,
+                  includeHidden: false,
+                  orderBy: PropertyFieldListPickerOrderBy.Title,
+                  disabled: false,
+                  includeListTitleAndUrl: true,
+                  onPropertyChange: this.onPropertyPaneFieldChanged,
+                  properties: this.properties,
+                  context: this.context as any,
+                  deferredValidationTime: 0,
+                  key: "listPickerFieldId2",
+                }),
+                PropertyFieldListPicker("Tablareglas", {
+                  label: "Selecciona la lista de Tabla de reglas",
+                  selectedList: this.properties.Tablareglas,
+                  includeHidden: false,
+                  orderBy: PropertyFieldListPickerOrderBy.Title,
+                  disabled: false,
+                  includeListTitleAndUrl: true,
+                  onPropertyChange: this.onPropertyPaneFieldChanged,
+                  properties: this.properties,
+                  context: this.context as any,
+                  deferredValidationTime: 0,
+                  key: "listPickerFieldId3",
+                }),
+                PropertyFieldListPicker("ListaValidaciom", {
+                  label: "Selecciona la lista de validación",
+                  selectedList: this.properties.ListaValidaciom,
+                  includeHidden: false,
+                  orderBy: PropertyFieldListPickerOrderBy.Title,
+                  disabled: false,
+                  includeListTitleAndUrl: true,
+                  onPropertyChange: this.onPropertyPaneFieldChanged,
+                  properties: this.properties,
+                  context: this.context as any,
+                  deferredValidationTime: 0,
+                  key: "listPickerFieldId4",
                 }),
               ],
             },

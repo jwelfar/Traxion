@@ -5,4 +5,7 @@ export interface IHelloWorldProps {
   context: WebPartContext;
   Remisiones: any;
   DatosAI: any;
+  ListCheck: any;
+  Tablareglas: any;
+  ListaValidaciom:any;
 }

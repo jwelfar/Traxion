@@ -27,9 +27,17 @@
         "id": "8fd07f27-7654-4953-aa8d-0a51c2743d17",
         "version": "1.0.0.0"
       }
+    ],
+    "webApiPermissionRequests": [
+      {
+        "resource": "Windows Azure Active Directory",
+        "scope": "User.Read"
+      }
+     
     ]
   },
   "paths": {
     "zippedPackage": "solution/dps.sppkg"
   }
+ 
 }
