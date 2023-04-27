@@ -78,6 +78,7 @@ export interface ITableState {
   Cartacertificado: any;
   FechaRegistro: any;
   ordenreposicionsuma: any;
+  errornoai:any;
   columns: any[];
   columns2: any[];
   ListCheck: any[];
@@ -428,6 +429,7 @@ export default class HelloWorld extends React.Component<
       cartacanjeclave: "",
       FechaRegistro: "",
       ordenreposicionsuma: "",
+      errornoai:"",
       listafederal: [],
       columns2: columnas2,
       columns: columnas,
@@ -462,6 +464,7 @@ export default class HelloWorld extends React.Component<
       cartacanjeclave: row?.ErrorTableClave === null || row?.ErrorTableClave === undefined ? "" : row?.ErrorTableClave,
       cartacanjefecha: row?.ErrorTableClaveFecha === null || row?.ErrorTableClaveFecha === undefined ? "" : row?.ErrorTableClaveFecha,
       ordenreposicionsuma: row?.ErrorSUma === null || row?.ErrorSUma === undefined ? "" : row?.ErrorSUma,
+      errornoai:row?.nolectura===null ||  row?.nolectura === undefined ? "" : row?.nolectura,
       /* Cartaviciostabla:any;
        Cartagarantiatabla:any;
        cartacanjetabla:any;
@@ -1158,6 +1161,7 @@ export default class HelloWorld extends React.Component<
         const ordenes = this.state.Tablereglas.filter(item => {
           return item.TipoTabla === "Tabla-Ordenes" && datoAI.Title === item.UrlArchivo;
         });
+        if(ordenes.length>0){
         const ordenefina = this.findDuplicates(ordenes);
         if (ordenefina?.length > 0) {
           datoAI.stylored = "red";
@@ -1238,7 +1242,10 @@ export default class HelloWorld extends React.Component<
           datoAI.stylored = "red";
           datoAI.ErrorSUma = "Error en lote: " + lotes + " cantidad:" + datoAI?.Cantidad;
         }
-
+      }
+      else{
+        datoAI.nolectura = "Error no tiene lectura por la AI";
+      }
       });
     }
   }
@@ -1656,6 +1663,10 @@ export default class HelloWorld extends React.Component<
             {this.state.ordenreposicionsuma &&
               <> <h2>Errores en Orden reposición</h2>
                 <p>{this.state.ordenreposicionsuma}</p></>
+            }
+             {this.state.errornoai &&
+              <> <h2>Errores en lectura AI</h2>
+                <p>{this.state.errornoai}</p></>
             }
             <div
               style={{
