@@ -1244,6 +1244,7 @@ export default class HelloWorld extends React.Component<
         }
       }
       else{
+        datoAI.stylored = "red";
         datoAI.nolectura = "Error no tiene lectura por la AI";
       }
       });
