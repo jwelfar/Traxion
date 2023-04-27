@@ -952,7 +952,7 @@ export default class HelloWorld extends React.Component<
 
   finalistcheckDataTable = async (): Promise<void> => {
     const result: any = [];
-    if (this.state.DatosAI && this.state.Listacheckd) {
+    if (this.state.DatosAI.length>0 && this.state.Listacheckd.length>0) {
       this.state.DatosAI.forEach((datoAI) => {
         const remFilter = this.state.Listacheckd.filter((remision) => {
           return remision.UrlArchivo === datoAI.Title;
@@ -1030,7 +1030,8 @@ export default class HelloWorld extends React.Component<
 
   finalDataTable = async (): Promise<void> => {
     const result: any = [];
-    if (this.state.DatosAI.length > 0 && this.state.Remisiones.length > 0) {
+    if (this.state.DatosAI.length > 0){ 
+      if(this.state.Remisiones.length > 0) {
       this.state.DatosAI.forEach((datoAI: {
         NO_ORDEN_REPOSICION_UNOPS: any; Title: any;
       }) => {
@@ -1039,7 +1040,9 @@ export default class HelloWorld extends React.Component<
           const remFilter = this.state.Remisiones.filter((remision: { ID_x002d_Remision: any; }) => {
             return datoAI.Title === remision.ID_x002d_Remision;
           });
-
+          if(remFilter.length===0){
+            result.push(datoAI);
+          }else{
           const results = remFilter.reduce((x: any, y: any) => {
             (x[y.Lote] = x[y.Lote] || []).push(y);
             return x;
@@ -1087,6 +1090,8 @@ export default class HelloWorld extends React.Component<
             })
           );
         }
+      }
+       
       });
 
       this.setState({
@@ -1096,6 +1101,28 @@ export default class HelloWorld extends React.Component<
         loading: false
       });
     }
+    else{
+      this.state.DatosAI.forEach((datoAI: {
+        NO_ORDEN_REPOSICION_UNOPS: any; Title: any;
+      }) => {
+        const datos = datoAI?.Title.toString().indexOf('PO-') > -1 || datoAI?.Title.toString().indexOf('PO/') > -1;
+        if (datos === false) {
+         
+          const dato: any = [];
+         
+            dato.push(datoAI);
+          }
+          
+        });
+         this.setState({
+        filteredDataf: result.flat(),
+      });
+      this.setState({
+        loading: false
+      });
+      }
+    }
+  
   };
 
   finalDataTableval = async (): Promise<void> => {
@@ -1213,8 +1240,6 @@ export default class HelloWorld extends React.Component<
         }
 
       });
-
-
     }
   }
 
