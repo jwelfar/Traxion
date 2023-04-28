@@ -220,7 +220,7 @@ export default class HelloWorld extends React.Component<
         selector: (row: any) => {
           const numOrden =
             row.NO_ORDEN_REPOSICION_UNOPS || row.ID_x002d_Remision;
-          const or = numOrden.substring(numOrden.lastIndexOf("/") + 1);
+          const or = numOrden?.substring(numOrden?.lastIndexOf("/") + 1);
           return <span>{or}</span>;
 
         },
@@ -1149,8 +1149,9 @@ export default class HelloWorld extends React.Component<
 
 
   CheckOrdenSalida = async (): Promise<void> => {
-    if (this.state.filteredDataf.length > 0 && this.state.Tablereglas.length > 0) {
-      const cartacanjelotes: any = this.state.Tablereglas.reduce((acc, curr) => {
+    if (this.state.filteredDataf.length > 0){
+   
+      const cartacanjelotes: any = this.state.Tablereglas?.reduce((acc, curr) => {
         if (!acc[curr.UrlArchivo]) {
           acc[curr.UrlArchivo] = [];
         }
@@ -1158,7 +1159,7 @@ export default class HelloWorld extends React.Component<
         return acc;
       }, {});
       this.state.filteredDataf.forEach((datoAI): void => {
-        const ordenes = this.state.Tablereglas.filter(item => {
+        const ordenes = this.state.Tablereglas?.filter(item => {
           return item.TipoTabla === "Tabla-Ordenes" && datoAI.Title === item.UrlArchivo;
         });
         if(ordenes.length>0){
@@ -1249,6 +1250,7 @@ export default class HelloWorld extends React.Component<
       }
       });
     }
+
   }
 
 
