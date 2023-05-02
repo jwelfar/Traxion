@@ -78,7 +78,7 @@ export interface ITableState {
   Cartacertificado: any;
   FechaRegistro: any;
   ordenreposicionsuma: any;
-  errornoai:any;
+  errornoai: any;
   columns: any[];
   columns2: any[];
   ListCheck: any[];
@@ -429,7 +429,7 @@ export default class HelloWorld extends React.Component<
       cartacanjeclave: "",
       FechaRegistro: "",
       ordenreposicionsuma: "",
-      errornoai:"",
+      errornoai: "",
       listafederal: [],
       columns2: columnas2,
       columns: columnas,
@@ -464,7 +464,7 @@ export default class HelloWorld extends React.Component<
       cartacanjeclave: row?.ErrorTableClave === null || row?.ErrorTableClave === undefined ? "" : row?.ErrorTableClave,
       cartacanjefecha: row?.ErrorTableClaveFecha === null || row?.ErrorTableClaveFecha === undefined ? "" : row?.ErrorTableClaveFecha,
       ordenreposicionsuma: row?.ErrorSUma === null || row?.ErrorSUma === undefined ? "" : row?.ErrorSUma,
-      errornoai:row?.nolectura===null ||  row?.nolectura === undefined ? "" : row?.nolectura,
+      errornoai: row?.nolectura === null || row?.nolectura === undefined ? "" : row?.nolectura,
       /* Cartaviciostabla:any;
        Cartagarantiatabla:any;
        cartacanjetabla:any;
@@ -955,7 +955,7 @@ export default class HelloWorld extends React.Component<
 
   finalistcheckDataTable = async (): Promise<void> => {
     const result: any = [];
-    if (this.state.DatosAI.length>0 && this.state.Listacheckd.length>0) {
+    if (this.state.DatosAI.length > 0 && this.state.Listacheckd.length > 0) {
       this.state.DatosAI.forEach((datoAI) => {
         const remFilter = this.state.Listacheckd.filter((remision) => {
           return remision.UrlArchivo === datoAI.Title;
@@ -1033,99 +1033,99 @@ export default class HelloWorld extends React.Component<
 
   finalDataTable = async (): Promise<void> => {
     const result: any = [];
-    if (this.state.DatosAI.length > 0){ 
-      if(this.state.Remisiones.length > 0) {
-      this.state.DatosAI.forEach((datoAI: {
-        NO_ORDEN_REPOSICION_UNOPS: any; Title: any;
-      }) => {
-        const dato = datoAI?.Title.toString().indexOf('PO-') > -1 || datoAI?.Title.toString().indexOf('PO/') > -1;
-        if (dato === false) {
-          const remFilter = this.state.Remisiones.filter((remision: { ID_x002d_Remision: any; }) => {
-            return datoAI.Title === remision.ID_x002d_Remision;
-          });
-          if(remFilter.length===0){
-            result.push(datoAI);
-          }else{
-          const results = remFilter.reduce((x: any, y: any) => {
-            (x[y.Lote] = x[y.Lote] || []).push(y);
-            return x;
-          }, {});
+    if (this.state.DatosAI.length > 0) {
+      if (this.state.Remisiones.length > 0) {
+        this.state.DatosAI.forEach((datoAI: {
+          NO_ORDEN_REPOSICION_UNOPS: any; Title: any;
+        }) => {
+          const dato = datoAI?.Title.toString().indexOf('PO-') > -1 || datoAI?.Title.toString().indexOf('PO/') > -1;
+          if (dato === false) {
+            const remFilter = this.state.Remisiones.filter((remision: { ID_x002d_Remision: any; }) => {
+              return datoAI.Title === remision.ID_x002d_Remision;
+            });
+            if (remFilter.length === 0) {
+              result.push(datoAI);
+            } else {
+              const results = remFilter.reduce((x: any, y: any) => {
+                (x[y.Lote] = x[y.Lote] || []).push(y);
+                return x;
+              }, {});
 
-          const datos = Object.keys(results);
-          const dato: any = [];
-          datos.forEach((ele) => {
-            dato.push(results[ele]);
-          });
+              const datos = Object.keys(results);
+              const dato: any = [];
+              datos.forEach((ele) => {
+                dato.push(results[ele]);
+              });
 
-          const joinObject = (dataJson: any) => {
-            let resultObj = {};
-            const resultArray = [];
+              const joinObject = (dataJson: any) => {
+                let resultObj = {};
+                const resultArray = [];
 
-            const finalObj = (currentObj: any = {}, nextObj: any = {}) => {
-              let resObj = { ...currentObj };
-              for (const k in nextObj) {
-                if (nextObj[k] === null) {
-                  resObj = { ...resObj };
-                } else {
-                  resObj = { ...resObj, [k]: nextObj[k] };
+                const finalObj = (currentObj: any = {}, nextObj: any = {}) => {
+                  let resObj = { ...currentObj };
+                  for (const k in nextObj) {
+                    if (nextObj[k] === null) {
+                      resObj = { ...resObj };
+                    } else {
+                      resObj = { ...resObj, [k]: nextObj[k] };
+                    }
+                  }
+                  return resObj;
+                };
+
+                for (let i = 0; i < dataJson.length; i++) {
+                  for (let j = 0; j < dataJson[i].length; j++) {
+                    resultObj = finalObj(resultObj, dataJson[i][j]);
+                  }
+                  resultArray.push(resultObj);
+                  resultObj = {};
                 }
-              }
-              return resObj;
-            };
 
-            for (let i = 0; i < dataJson.length; i++) {
-              for (let j = 0; j < dataJson[i].length; j++) {
-                resultObj = finalObj(resultObj, dataJson[i][j]);
-              }
-              resultArray.push(resultObj);
-              resultObj = {};
-            }
-
-            return resultArray;
-          };
-
-          result.push(
-            joinObject(dato).map((item) => {
-              return {
-                ...datoAI,
-                ...item,
+                return resultArray;
               };
-            })
-          );
-        }
-      }
-       
-      });
 
-      this.setState({
-        filteredDataf: result.flat(),
-      });
-      this.setState({
-        loading: false
-      });
-    }
-    else{
-      this.state.DatosAI.forEach((datoAI: {
-        NO_ORDEN_REPOSICION_UNOPS: any; Title: any;
-      }) => {
-        const datos = datoAI?.Title.toString().indexOf('PO-') > -1 || datoAI?.Title.toString().indexOf('PO/') > -1;
-        if (datos === false) {
-         
-          const dato: any = [];
-         
+              result.push(
+                joinObject(dato).map((item) => {
+                  return {
+                    ...datoAI,
+                    ...item,
+                  };
+                })
+              );
+            }
+          }
+
+        });
+
+        this.setState({
+          filteredDataf: result.flat(),
+        });
+        this.setState({
+          loading: false
+        });
+      }
+      else {
+        this.state.DatosAI.forEach((datoAI: {
+          NO_ORDEN_REPOSICION_UNOPS: any; Title: any;
+        }) => {
+          const datos = datoAI?.Title.toString().indexOf('PO-') > -1 || datoAI?.Title.toString().indexOf('PO/') > -1;
+          if (datos === false) {
+
+            const dato: any = [];
+
             dato.push(datoAI);
           }
-          
+
         });
-         this.setState({
-        filteredDataf: result.flat(),
-      });
-      this.setState({
-        loading: false
-      });
+        this.setState({
+          filteredDataf: result.flat(),
+        });
+        this.setState({
+          loading: false
+        });
       }
     }
-  
+
   };
 
   finalDataTableval = async (): Promise<void> => {
@@ -1149,8 +1149,8 @@ export default class HelloWorld extends React.Component<
 
 
   CheckOrdenSalida = async (): Promise<void> => {
-    if (this.state.filteredDataf.length > 0){
-   
+    if (this.state.filteredDataf.length > 0) {
+
       const cartacanjelotes: any = this.state.Tablereglas?.reduce((acc, curr) => {
         if (!acc[curr.UrlArchivo]) {
           acc[curr.UrlArchivo] = [];
@@ -1162,92 +1162,92 @@ export default class HelloWorld extends React.Component<
         const ordenes = this.state.Tablereglas?.filter(item => {
           return item.TipoTabla === "Tabla-Ordenes" && datoAI.Title === item.UrlArchivo;
         });
-        if(ordenes.length>0){
-        const ordenefina = this.findDuplicates(ordenes);
-        if (ordenefina?.length > 0) {
-          datoAI.stylored = "red";
-          datoAI.ErrorTabla = "Entidad federativa: " + ordenefina[0].Title + " - " + ordenefina[0].ENTIDAD_FEDERATIVA;
-        }
-        if (cartacanjelotes.length > 0) {
-          const found = cartacanjelotes[datoAI.Title].filter((a: any) => datoAI?.Lote === a.LOTE && datoAI.Title === a.UrlArchivo && a.TipoTabla === 'Tabla-CartaCanje');
-          if (found.length <= 0) {
+        if (ordenes.length > 0) {
+          const ordenefina = this.findDuplicates(ordenes);
+          if (ordenefina?.length > 0) {
             datoAI.stylored = "red";
-            datoAI.Tablacanje = "Error en lote: " + datoAI.Lote;
+            datoAI.ErrorTabla = "Entidad federativa: " + ordenefina[0].Title + " - " + ordenefina[0].ENTIDAD_FEDERATIVA;
           }
-        }
-        const tablacanje = this.state.Tablereglas.filter(item => {
-          return item.TipoTabla === "Tabla-CartaCanje" && datoAI.Title === item.UrlArchivo;
-        });
-
-        if (tablacanje.length > 0) {
-          tablacanje.forEach((tcanje): void => {
-            if (tcanje.Title === datoAI.Clave) {
+          if (cartacanjelotes.length > 0) {
+            const found = cartacanjelotes[datoAI.Title].filter((a: any) => datoAI?.Lote === a.LOTE && datoAI.Title === a.UrlArchivo && a.TipoTabla === 'Tabla-CartaCanje');
+            if (found.length <= 0) {
               datoAI.stylored = "red";
-              datoAI.ErrorTableClave = "Error en Clave: " + datoAI.Clave;
-
+              datoAI.Tablacanje = "Error en lote: " + datoAI.Lote;
             }
-            if (tcanje.Fecha_Caducidad) {
-              const fechacad = tcanje.Fecha_Caducidad;
-              if (fechacad.include("/")) {
-                if (fechacad.length === 10) {
-                  const date = moment(fechacad, 'DD-MM-YYYY').format('DD-MM-YYYY');
-                  if (date < moment().format('DD-MM-YYYY')) {
-                    datoAI.stylored = "red";
-                    datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
-                  }
-                }
-                else {
-                  const dateString = fechacad;
-                  const [month, year] = dateString.split('/');
-                  const lastDayOfMonth = moment(`${year}-${month}`, 'YYYY/MM').endOf('month').date();
-                  const date = moment(`${year}-${month}-${lastDayOfMonth}`, 'YYYY-MM-DD').format('DD-MM-YYYY');
-                  if (date < moment().format('DD-MM-YYYY')) {
-                    datoAI.stylored = "red";
-                    datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
-                  }
-                }
-              }
-              else {
-                if (fechacad.length === 10) {
-                  const date = moment(fechacad, 'DD-MM-YYYY').format('DD-MM-YYYY');
-                  if (date < moment().format('DD-MM-YYYY')) {
-                    datoAI.stylored = "red";
-                    datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
-                  }
-                }
-                else {
-                  const dateString = fechacad;
-                  const [month, year] = dateString.split('-');
-                  const lastDayOfMonth = moment(`${year}-${month}`, 'YYYY-MM').endOf('month').date();
-                  const date = moment(`${year}-${month}-${lastDayOfMonth}`, 'YYYY-MM-DD').format('DD-MM-YYYY');
-                  if (date < moment().format('DD-MM-YYYY')) {
-                    datoAI.stylored = "red";
-                    datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
-                  }
-                }
-              }
-            }
-
+          }
+          const tablacanje = this.state.Tablereglas.filter(item => {
+            return item.TipoTabla === "Tabla-CartaCanje" && datoAI.Title === item.UrlArchivo;
           });
-        }
-        if (datoAI?.FechaRegistroSanitario) {
-          if (moment(datoAI.FechaRegistroSanitario).format("DD-MM-YYYY") >= moment().subtract(150, 'days').format("DD-MM-YYYY")) {
+
+          if (tablacanje.length > 0) {
+            tablacanje.forEach((tcanje): void => {
+              if (tcanje.Title === datoAI.Clave) {
+                datoAI.stylored = "red";
+                datoAI.ErrorTableClave = "Error en Clave: " + datoAI.Clave;
+
+              }
+              if (tcanje.Fecha_Caducidad) {
+                const fechacad = tcanje.Fecha_Caducidad;
+                if (fechacad.include("/")) {
+                  if (fechacad.length === 10) {
+                    const date = moment(fechacad, 'DD-MM-YYYY').format('DD-MM-YYYY');
+                    if (date < moment().format('DD-MM-YYYY')) {
+                      datoAI.stylored = "red";
+                      datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                    }
+                  }
+                  else {
+                    const dateString = fechacad;
+                    const [month, year] = dateString.split('/');
+                    const lastDayOfMonth = moment(`${year}-${month}`, 'YYYY/MM').endOf('month').date();
+                    const date = moment(`${year}-${month}-${lastDayOfMonth}`, 'YYYY-MM-DD').format('DD-MM-YYYY');
+                    if (date < moment().format('DD-MM-YYYY')) {
+                      datoAI.stylored = "red";
+                      datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                    }
+                  }
+                }
+                else {
+                  if (fechacad.length === 10) {
+                    const date = moment(fechacad, 'DD-MM-YYYY').format('DD-MM-YYYY');
+                    if (date < moment().format('DD-MM-YYYY')) {
+                      datoAI.stylored = "red";
+                      datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                    }
+                  }
+                  else {
+                    const dateString = fechacad;
+                    const [month, year] = dateString.split('-');
+                    const lastDayOfMonth = moment(`${year}-${month}`, 'YYYY-MM').endOf('month').date();
+                    const date = moment(`${year}-${month}-${lastDayOfMonth}`, 'YYYY-MM-DD').format('DD-MM-YYYY');
+                    if (date < moment().format('DD-MM-YYYY')) {
+                      datoAI.stylored = "red";
+                      datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                    }
+                  }
+                }
+              }
+
+            });
+          }
+          if (datoAI?.FechaRegistroSanitario) {
+            if (moment(datoAI.FechaRegistroSanitario).format("DD-MM-YYYY") >= moment().subtract(150, 'days').format("DD-MM-YYYY")) {
+              datoAI.stylored = "red";
+              datoAI.ErrorfechaRegistro = "Error en fecha de registro sanitario: " + datoAI?.FechaRegistroSanitario;
+            }
+          }
+          const ordenesclave = this.findsumm(this.state.filteredDataf);
+          const findsum = datoAI.Cantidad === ordenesclave.toString() ? true : false;
+          if (findsum === false) {
+            const lotes = datoAI?.Lote === undefined ? "" : datoAI?.Lote
             datoAI.stylored = "red";
-            datoAI.ErrorfechaRegistro = "Error en fecha de registro sanitario: " + datoAI?.FechaRegistroSanitario;
+            datoAI.ErrorSUma = "Error en lote: " + lotes + " cantidad:" + datoAI?.Cantidad;
           }
         }
-        const ordenesclave = this.findsumm(this.state.filteredDataf);
-        const findsum = datoAI.Cantidad === ordenesclave.toString() ? true : false;
-        if (findsum === false) {
-          const lotes = datoAI?.Lote === undefined ? "" : datoAI?.Lote
+        else {
           datoAI.stylored = "red";
-          datoAI.ErrorSUma = "Error en lote: " + lotes + " cantidad:" + datoAI?.Cantidad;
+          datoAI.nolectura = "Error no tiene lectura por la AI";
         }
-      }
-      else{
-        datoAI.stylored = "red";
-        datoAI.nolectura = "Error no tiene lectura por la AI";
-      }
       });
     }
 
@@ -1256,7 +1256,7 @@ export default class HelloWorld extends React.Component<
 
   findDuplicates = (arr: any[]): any[] => {
     const duplicates: any = [];
-    for (let i = 0; i < arr.length ; i++) {
+    for (let i = 0; i < arr.length; i++) {
       for (let j = i + 1; j < arr.length; j++) {
         if (arr[i].ENTIDAD_FEDERATIVA === arr[j].ENTIDAD_FEDERATIVA && arr[i].Title === arr[j].Title) {
           if (!duplicates.includes(arr[i])) {
@@ -1274,21 +1274,21 @@ export default class HelloWorld extends React.Component<
 
   findsumm = (arr: any[]): any[] => {
     let cantidad: any = 0;
-    if(arr.length >1){
-    for (let i = 0; i < arr.length-1 ; i++) {
-      for (let j = i + 1; j < arr.length; j++) {
-        if (arr[i].Lote === arr[j].Lote && arr[i].Title === arr[j].Title && arr[i].Clave === arr[j].Clave) {
-          if(!isNaN(+arr[i].Cantidad)) 
-          cantidad =  Number(arr[i].Cantidad)+ Number(cantidad);
-         
+    if (arr.length > 1) {
+      for (let i = 0; i < arr.length - 1; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+          if (arr[i].Lote === arr[j].Lote && arr[i].Title === arr[j].Title && arr[i].Clave === arr[j].Clave) {
+            if (!isNaN(+arr[i].Cantidad))
+              cantidad = Number(arr[i].Cantidad) + Number(cantidad);
+
+          }
         }
       }
     }
-    }
-    else{
-      for (let i = 0; i <= arr.length-1 ; i++) {
-       if(!isNaN(+arr[i].Cantidad)) 
-      cantidad =  Number(arr[i].Cantidad)+ cantidad;
+    else {
+      for (let i = 0; i <= arr.length - 1; i++) {
+        if (!isNaN(+arr[i].Cantidad))
+          cantidad = Number(arr[i].Cantidad) + cantidad;
       }
     }
     return cantidad;
@@ -1360,15 +1360,16 @@ export default class HelloWorld extends React.Component<
         });
         //elimina de tabla reglas
         const columnValue = archivo;
-        let myList = _sp.web.lists.getById(this.props.Tablareglas.id)
+        let myList =  spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.Tablareglas.id)
         let itemsToDelete = await myList.items.filter(`UrlArchivo eq '${columnValue}'`)();
 
         // Delete each item
         for (const item of itemsToDelete) {
-          await myList.items.getById(item.Id).delete();
+          spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.Tablareglas.id).items.getById(item.Id).delete;  
         }
+        
         //elimina de tabla lista checkeo
-        myList = _sp.web.lists.getById(this.props.ListCheck.id)
+        myList =  spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.ListCheck.id)
         itemsToDelete = await myList.items.filter(`UrlArchivo eq '${columnValue}'`)();
 
         // Delete each item
@@ -1376,7 +1377,7 @@ export default class HelloWorld extends React.Component<
           await myList.items.getById(item.Id).delete();
         }
         //elimina de tabla lista remisiones
-        myList = _sp.web.lists.getById(this.props.Remisiones.id)
+        myList =  spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.Remisiones.id)
         itemsToDelete = await myList.items.filter(`ID_x002d_Remision eq '${columnValue}'`)();
 
         // Delete each item
@@ -1386,7 +1387,7 @@ export default class HelloWorld extends React.Component<
 
 
         //elimina de tabla lista DatosAI
-        myList = _sp.web.lists.getById(this.props.DatosAI.id)
+        myList = spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.DatosAI.id)
         itemsToDelete = await myList.items.filter(`Title eq '${columnValue}'`)();
 
         // Delete each item
@@ -1398,6 +1399,11 @@ export default class HelloWorld extends React.Component<
           title: 'Documento removido',
           showConfirmButton: false,
           timer: 1500
+        });
+        this.setState({
+          filteredData: [],
+        filteredDataf: [],
+        filteredDatalistache: [],
         });
         setTimeout(async () =>
           await this.getAIDataTable().then(async () => {
@@ -1667,7 +1673,7 @@ export default class HelloWorld extends React.Component<
               <> <h2>Errores en Orden reposición</h2>
                 <p>{this.state.ordenreposicionsuma}</p></>
             }
-             {this.state.errornoai &&
+            {this.state.errornoai &&
               <> <h2>Errores en lectura AI</h2>
                 <p>{this.state.errornoai}</p></>
             }
