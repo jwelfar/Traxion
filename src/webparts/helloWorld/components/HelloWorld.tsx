@@ -1495,17 +1495,25 @@ export default class HelloWorld extends React.Component<
         });
         //elimina de tabla reglas
         const columnValue = archivo;
-        let myList = _sp.web.lists.getById(this.props.Tablareglas.id);
+        let myList = spfi()
+          .using(SPFx(this.props.context))
+          .web.lists.getById(this.props.Tablareglas.id);
         let itemsToDelete = await myList.items.filter(
           `UrlArchivo eq '${columnValue}'`
         )();
 
         // Delete each item
         for (const item of itemsToDelete) {
-          await myList.items.getById(item.Id).delete();
+          spfi()
+            .using(SPFx(this.props.context))
+            .web.lists.getById(this.props.Tablareglas.id)
+            .items.getById(item.Id).delete;
         }
+
         //elimina de tabla lista checkeo
-        myList = _sp.web.lists.getById(this.props.ListCheck.id);
+        myList = spfi()
+          .using(SPFx(this.props.context))
+          .web.lists.getById(this.props.ListCheck.id);
         itemsToDelete = await myList.items.filter(
           `UrlArchivo eq '${columnValue}'`
         )();
@@ -1515,7 +1523,9 @@ export default class HelloWorld extends React.Component<
           await myList.items.getById(item.Id).delete();
         }
         //elimina de tabla lista remisiones
-        myList = _sp.web.lists.getById(this.props.Remisiones.id);
+        myList = spfi()
+          .using(SPFx(this.props.context))
+          .web.lists.getById(this.props.Remisiones.id);
         itemsToDelete = await myList.items.filter(
           `ID_x002d_Remision eq '${columnValue}'`
         )();
@@ -1526,7 +1536,9 @@ export default class HelloWorld extends React.Component<
         }
 
         //elimina de tabla lista DatosAI
-        myList = _sp.web.lists.getById(this.props.DatosAI.id);
+        myList = spfi()
+          .using(SPFx(this.props.context))
+          .web.lists.getById(this.props.DatosAI.id);
         itemsToDelete = await myList.items.filter(
           `Title eq '${columnValue}'`
         )();
@@ -1541,6 +1553,11 @@ export default class HelloWorld extends React.Component<
           showConfirmButton: false,
           timer: 1500,
         });
+        this.setState({
+          filteredData: [],
+          filteredDataf: [],
+          filteredDatalistache: [],
+        });
         setTimeout(
           async () =>
             await this.getAIDataTable().then(async () => {
@@ -1553,9 +1570,9 @@ export default class HelloWorld extends React.Component<
                   await this.finalistcheckDataTable();
                   await this.finalDataTableval();
                 });
-              });
-            }),
-          3000
+              }),
+                3000;
+            })
         );
       }
     });
