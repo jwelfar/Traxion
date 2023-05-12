@@ -1158,21 +1158,25 @@ export default class HelloWorld extends React.Component<
         acc[curr.UrlArchivo].push(curr);
         return acc;
       }, {});
-      this.state.filteredDataf.forEach((datoAI): void => {
+      let validadornumero = 0;
+           this.state.filteredDataf.forEach((datoAI): void => {
         const ordenes = this.state.Tablereglas?.filter(item => {
           return item.TipoTabla === "Tabla-Ordenes" && datoAI.Title === item.UrlArchivo;
         });
         if (ordenes.length > 0) {
           const ordenefina = this.findDuplicates(ordenes);
-          if (ordenefina?.length > 0) {
-            datoAI.stylored = "red";
-            datoAI.ErrorTabla = "Entidad federativa: " + ordenefina[0].Title + " - " + ordenefina[0].ENTIDAD_FEDERATIVA;
+            if (ordenefina?.length > 0) {
+              datoAI.stylored = "red";
+              datoAI.ErrorTabla = "Entidad federativa: " + ordenefina[0].Title + " - " + ordenefina[0].ENTIDAD_FEDERATIVA;
+             
+            }
           }
           if (cartacanjelotes.length > 0) {
             const found = cartacanjelotes[datoAI.Title].filter((a: any) => datoAI?.Lote === a.LOTE && datoAI.Title === a.UrlArchivo && a.TipoTabla === 'Tabla-CartaCanje');
             if (found.length <= 0) {
               datoAI.stylored = "red";
               datoAI.Tablacanje = "Error en lote: " + datoAI.Lote;
+              validadornumero=validadornumero+1;
             }
           }
           const tablacanje = this.state.Tablereglas.filter(item => {
@@ -1184,7 +1188,7 @@ export default class HelloWorld extends React.Component<
               if (tcanje.Title === datoAI.Clave) {
                 datoAI.stylored = "red";
                 datoAI.ErrorTableClave = "Error en Clave: " + datoAI.Clave;
-
+                validadornumero=validadornumero+1;
               }
               if (tcanje.Fecha_Caducidad) {
                 const fechacad = tcanje.Fecha_Caducidad;
@@ -1194,6 +1198,7 @@ export default class HelloWorld extends React.Component<
                     if (date < moment().format('DD-MM-YYYY')) {
                       datoAI.stylored = "red";
                       datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                      validadornumero=validadornumero+1;
                     }
                   }
                   else {
@@ -1204,6 +1209,7 @@ export default class HelloWorld extends React.Component<
                     if (date < moment().format('DD-MM-YYYY')) {
                       datoAI.stylored = "red";
                       datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                      validadornumero=validadornumero+1;
                     }
                   }
                 }
@@ -1213,6 +1219,7 @@ export default class HelloWorld extends React.Component<
                     if (date < moment().format('DD-MM-YYYY')) {
                       datoAI.stylored = "red";
                       datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                      validadornumero=validadornumero+1;
                     }
                   }
                   else {
@@ -1223,17 +1230,19 @@ export default class HelloWorld extends React.Component<
                     if (date < moment().format('DD-MM-YYYY')) {
                       datoAI.stylored = "red";
                       datoAI.ErrorTableClaveFecha = "Error en Fecha carta canje: " + fechacad;
+                      validadornumero=validadornumero+1;
                     }
                   }
                 }
               }
 
             });
-          }
+          
           if (datoAI?.FechaRegistroSanitario) {
             if (moment(datoAI.FechaRegistroSanitario).format("DD-MM-YYYY") >= moment().subtract(150, 'days').format("DD-MM-YYYY")) {
               datoAI.stylored = "red";
               datoAI.ErrorfechaRegistro = "Error en fecha de registro sanitario: " + datoAI?.FechaRegistroSanitario;
+              validadornumero=validadornumero+1;
             }
           }
           const ordenesclave = this.findsumm(this.state.filteredDataf);
@@ -1242,9 +1251,10 @@ export default class HelloWorld extends React.Component<
             const lotes = datoAI?.Lote === undefined ? "" : datoAI?.Lote
             datoAI.stylored = "red";
             datoAI.ErrorSUma = "Error en lote: " + lotes + " cantidad:" + datoAI?.Cantidad;
+            validadornumero=validadornumero+1;
           }
         }
-        else {
+        if(validadornumero===0){
           datoAI.stylored = "red";
           datoAI.nolectura = "Error no tiene lectura por la AI";
         }
