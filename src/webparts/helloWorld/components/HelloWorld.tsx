@@ -1,14 +1,17 @@
 import * as React from "react";
 import { IHelloWorldProps } from "./IHelloWorldProps";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { SPFI, spfi, SPFx } from "@pnp/sp/presets/all";
+import {  SPFI, spfi, SPFx } from "@pnp/sp/presets/all";
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
 import "@pnp/sp/site-users/web";
 import "@pnp/sp/folders";
 import "@pnp/sp/files";
+import "@pnp/sp/batching";
+import "@pnp/sp/items/get-all";
 import styless from "./HelloWorld.module.scss";
+//import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import {
   DefaultButton,
   TextField,
@@ -23,7 +26,7 @@ import {
 import * as XLSX from "xlsx";
 import DataTable from "react-data-table-component";
 import * as moment from "moment";
-import Swal from 'sweetalert2'
+import Swal from 'sweetalert2';
 
 let _sp: SPFI = null;
 export interface IFederatibeitem {
@@ -99,6 +102,8 @@ export interface ITableState {
   filteredDataf: any[];
   filteredDatalistache: any[];
   loading: any;
+  cfnFilter: any;
+  
 }
 
 interface MyItem {
@@ -448,7 +453,8 @@ export default class HelloWorld extends React.Component<
       filteredDataf: [],
       loading: false,
       ListCheck: [],
-      filteredDatalistache: []
+      filteredDatalistache: [],
+      cfnFilter: [],
     };
 
   }
@@ -725,6 +731,78 @@ export default class HelloWorld extends React.Component<
       }
     }
   }
+//   private getPageListItems(listTitle: string, index: number, query:string): Promise<any[]> { 
+//     return new Promise<any[]>((resolve, reject): void => { 
+//     let requestUrl = this.props.context.pageContext.web.absoluteUrl 
+//         + `/_api/web/Lists/GetByTitle('` + listTitle + `')/items` 
+//         + `?$skiptoken=Paged=TRUE%26p_ID=` + (index * 4900 + 1) 
+//         + `&$top=` + 4900
+//         + `&$select=
+//           Title,
+//           ENTIDAD_FEDERATIVA,
+//           CANTIDAD_RECIBIDA,
+//           LOTE,
+//           FECHA_FABRICACION,
+//           FECHA_CADUCIDAD,
+//           UrlArchivo,
+//           TipoTabla,
+//           Id`
+//           + `&$filter=` + query + `'`;
+   
+//         this.props.context.spHttpClient.get(requestUrl, SPHttpClient.configurations.v1) 
+//     .then((response: SPHttpClientResponse) => { 
+//         response.json().then((responseJSON: any) => {   
+//             resolve(responseJSON.value);   
+//           });   
+//         }); 
+//     });  
+// }
+// public getLatestItemId(listTitle: string): Promise<number> { 
+//   return new Promise<number>((resolve: (itemId: number) => void, reject: (error: any) => void): void => { 
+//     getSP(this.props.context)
+//     .web.lists.getById(this.props.Tablareglas.id)
+//           .items.orderBy('Id', false).top(1).select('Id')()
+//           .then((items: { Id: number }[]): void => { 
+//               if (items.length === 0) { 
+//                   resolve(-1); 
+//               } 
+//               else { 
+//                   resolve(items[0].Id); 
+//               } 
+//           }, (error: any): void => { 
+//               reject(error); 
+//           }); 
+//   }); 
+// }
+// public async getLargeListItems(listTitle: string, query:string): Promise<any[]> { 
+//   var largeListItems: any[] = []; 
+ 
+//   return new Promise<any[]>(async (resolve, reject) => { 
+//       // Array to hold async calls 
+//       const asyncFunctions: any[] = []; 
+ 
+//       this.getLatestItemId(listTitle).then(async (itemCount: number) => { 
+//           for (let i = 0; i < Math.ceil(itemCount / 4900); i++) { 
+//               // Make multiple async calls 
+//               let resolvePagedListItems = () => { 
+//                   return new Promise(async (resolve) => { 
+//                       let pagedItems:any[] = await this.getPageListItems(listTitle, i,query); 
+//                       resolve(pagedItems); 
+//                   }) 
+//               }; 
+//               asyncFunctions.push(resolvePagedListItems()); 
+//           } 
+ 
+//                      // Wait for all async calls to finish 
+//           const results: any = await Promise.all(asyncFunctions); 
+//           for (let i = 0; i < results.length; i++) { 
+//               largeListItems = largeListItems.concat(results[i]); 
+//           } 
+ 
+//           resolve(largeListItems); 
+//       }); 
+//   }); 
+// }
   private async geTablaReglas(): Promise<void> {
 
     const maxDate = new Date(
@@ -755,13 +833,13 @@ export default class HelloWorld extends React.Component<
       if (query.length === 0) {
         query = ("Created ge datetime'" + this.formatDate(minDate.toString()) + "T00:00:00'");
         if (maxDate) {
-          query += (" and Created le datetime'" + this.formatDate(maxDate.toString()) + "T23:59:00'");
+          query += (" and Created le datetime'" + this.formatDate(minDate.toString()) + "T23:59:00'");
         }
       }
       else {
         query += (" and Created ge datetime'" + this.formatDate(minDate.toString()) + "T00:00:00'");
         if (maxDate) {
-          query += (" and Created le datetime'" + this.formatDate(maxDate.toString()) + "T23:59:00'");
+          query += (" and Created le datetime'" + this.formatDate(minDate.toString()) + "T23:59:00'");
         }
       }
     }
@@ -769,52 +847,71 @@ export default class HelloWorld extends React.Component<
 
     if (this.props.Tablareglas) {
       try {
-        let next = true;
+        //let next = true;
+       
         if (query.length > 0) {
-          items = await getSP(this.props.context)
-            .web.lists.getById(this.props.Tablareglas.id)
-            .items.select(
-              "Title",
-              "ENTIDAD_FEDERATIVA",
-              "CANTIDAD_RECIBIDA",
-              "LOTE",
-              "FECHA_FABRICACION",
-              "FECHA_CADUCIDAD",
-              "UrlArchivo",
-              "TipoTabla",
-              "Id"
-            )
-            .top(50).filter(query)
-            .getPaged();
-        }
-        else {
-          items = await getSP(this.props.context)
-            .web.lists.getById(this.props.Tablareglas.id)
-            .items.select(
-              "Title",
-              "ENTIDAD_FEDERATIVA",
-              "CANTIDAD_RECIBIDA",
-              "LOTE",
-              "FECHA_FABRICACION",
-              "FECHA_CADUCIDAD",
-              "UrlArchivo",
-              "TipoTabla",
-              "Id"
-            )
-            .top(50)
-            .getPaged();
-        }
-        const data = items.results;
-        response = response.concat(data);
+       // let datos=   this.getLargeListItems(this.props.Tablareglas.title,query);
+       // console.log(datos);
+          let iDate = minDate;
+          let iDate2 = minDate;
+          iDate.setHours(-5,0,0,0);
+          iDate2.setHours(-5,30,0,0);
+         while (iDate2 < maxDate) {
+          
+           query = "Created ge datetime'" + iDate.toISOString() + "'";
+             query += (" and Created le datetime'" + iDate2.toISOString()+ "'");
 
-        while (next) {
-          if (items.hasNext) {
-            items = await items.getNext();
-            response = response.concat(items.results);
-          } else {
-            next = false;
+              items = await getSP(this.props.context)
+              .web.lists.getById(this.props.Tablareglas.id)
+              .items.select(
+                "Title",
+                "ENTIDAD_FEDERATIVA",
+                "CANTIDAD_RECIBIDA",
+                "LOTE",
+                "FECHA_FABRICACION",
+                "FECHA_CADUCIDAD",
+                "UrlArchivo",
+                "TipoTabla",
+                "Id"
+              )
+             .filter(query)();
+            iDate=new Date(iDate.setMinutes(iDate.getMinutes() + 15));
+            iDate2=new Date(iDate2.setMinutes(iDate2.getMinutes() + 15));
+             
+              if(items.length>0){
+            const data = items;
+            response = response.concat(data);
+              }
           }
         }
+        else {
+          // items = await getSP(this.props.context)
+          //   .web.lists.getById(this.props.Tablareglas.id)
+          //   .items.select(
+          //     "Title",
+          //     "ENTIDAD_FEDERATIVA",
+          //     "CANTIDAD_RECIBIDA",
+          //     "LOTE",
+          //     "FECHA_FABRICACION",
+          //     "FECHA_CADUCIDAD",
+          //     "UrlArchivo",
+          //     "TipoTabla",
+          //     "Id"
+          //   )
+          //   .top(50)
+          //   .getPaged();
+        }
+        // const data = items.results;
+        // response = response.concat(data);
+
+        // while (next) {
+        //   if (items.hasNext) {
+        //     items = await items.getNext();
+        //     response = response.concat(items.results);
+        //   } else {
+        //     next = false;
+        //   }
+        // }
 
         this.setState({
           Tablereglas: response,
@@ -858,6 +955,7 @@ export default class HelloWorld extends React.Component<
               "Registro_Sanitario",
               "Presion_sin_iva",
               "Cantidad",
+              "CFN",
               "Fecha_Fabircada",
               "Fecha_Caducidad",
               "ID_x002d_Remision",
@@ -874,6 +972,7 @@ export default class HelloWorld extends React.Component<
               "Registro_Sanitario",
               "Presion_sin_iva",
               "Cantidad",
+              "CFN",
               "Fecha_Fabircada",
               "Fecha_Caducidad",
               "ID_x002d_Remision",
@@ -1099,6 +1198,13 @@ export default class HelloWorld extends React.Component<
 
         this.setState({
           filteredDataf: result.flat(),
+        });
+        this.setState({
+          cfnFilter: this.state.filteredDataf.filter((obj) => {
+            if (obj?.RAZON_SOCIAL?.includes("MEDTRONIC") && obj?.CFN) {
+              return obj.CFN.includes("SP");
+            }
+          }),
         });
         this.setState({
           loading: false
@@ -1375,7 +1481,7 @@ export default class HelloWorld extends React.Component<
 
         // Delete each item
         for (const item of itemsToDelete) {
-          spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.Tablareglas.id).items.getById(item.Id).delete;  
+         await spfi().using(SPFx(this.props.context)).web.lists.getById(this.props.Tablareglas.id).items.getById(item.Id).delete;  
         }
         
         //elimina de tabla lista checkeo
@@ -1482,7 +1588,7 @@ export default class HelloWorld extends React.Component<
           let tipomoneda = item.TIPO_MONEDA?.replace("(", "");
           tipomoneda = item.TIPO_MONEDA?.replace(")", "");
 
-          const filtefedar = this.state.listafederal?.filter(a => item.RAZON_SOCIAL.toLowerCase().indexOf(a.Title.toLowerCase()) >= 0);
+          const filtefedar = this.state.listafederal?.filter(a => item?.RAZON_SOCIAL?.toLowerCase().indexOf(a.Title.toLowerCase()) >= 0);
 
           const rfcvalue = filtefedar.length > 0 ? filtefedar[0].RFC : item.RFC_LABORATORIO;
 
