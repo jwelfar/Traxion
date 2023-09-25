@@ -11,6 +11,8 @@ import "@pnp/sp/files";
 import "@pnp/sp/batching";
 import "@pnp/sp/items/get-all";
 import styless from "./HelloWorld.module.scss";
+import Sendata from "./Sendata/Sendata"; // Import the Sendata component
+
 //import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import {
   DefaultButton,
@@ -103,7 +105,8 @@ export interface ITableState {
   filteredDatalistache: any[];
   loading: any;
   cfnFilter: any;
-  
+  selectedRows: any[];
+  selectedRowsData:any[]
 }
 
 interface MyItem {
@@ -113,7 +116,14 @@ interface MyItem {
   UrlArchivo: string;
   // add more properties as needed
 }
-
+const conditionalRowStyles = [
+  {
+    when: (row:any) => row.selected, // Apply style to selected rows
+    style: {
+      backgroundColor: 'lightgreen', // Set the background color for selected rows
+    },
+  },
+];
 export const getSP = (context?: WebPartContext): SPFI => {
   if (_sp === null && context !== null) {
     //You must add the @pnp/logging package to include the PnPLogging behavior it is no longer a peer dependency
@@ -140,7 +150,6 @@ export default class HelloWorld extends React.Component<
 > {
   constructor(props: IHelloWorldProps) {
     super(props);
-
 
     const columnas2 = [
       {
@@ -455,6 +464,8 @@ export default class HelloWorld extends React.Component<
       ListCheck: [],
       filteredDatalistache: [],
       cfnFilter: [],
+      selectedRows: [], 
+      selectedRowsData :[]
     };
 
   }
@@ -949,34 +960,14 @@ export default class HelloWorld extends React.Component<
               const data = remFilter;
               response = response.concat(data);
                 }
-          //   query =" UrlArchivo eq '"+element.Title+"'";
-          //   items = await getSP(this.props.context)
-          //   .web.lists.getById(this.props.Tablareglas.id)
-          //   .items.select(
-          //     "Title",
-          //     "ENTIDAD_FEDERATIVA",
-          //     "CANTIDAD_RECIBIDA",
-          //     "LOTE",
-          //     "FECHA_FABRICACION",
-          //     "FECHA_CADUCIDAD",
-          //     "UrlArchivo",
-          //     "TipoTabla",
-          //     "Id"
-          //   )
-          //  .filter(query)();
-          //   if(items?.length>0){
-          // const data = items;
-          // response = response.concat(data);
-          //   }
+  
           });
           this.setState({
             Tablereglas: response,
           });
   
         }
-         // iDate2.setHours(3,59,59,0);
-        
-       
+   
         
         return response;
       } catch (err) {
@@ -1146,28 +1137,28 @@ export default class HelloWorld extends React.Component<
     if(result !== undefined || result.length>0){
         result.forEach((element: { Title: string; Certificado_Calidad: string; Prorroga_Sanitario: string; Registro_Sanitario: string; Manifiesto: string; Carta_Vicios: string; Carta_Garantia: string; Carta_Canje: string; OrdenReposicion: string; UrlArchivo: string }) => {
           textvalidation = "";
-          if (element.Title === "" || element.Title === undefined || element.Title === null) {
+          if (element?.Title === "" || element?.Title === undefined || element?.Title === null) {
             textvalidation += "Remision, "
           }
-          if (element.Certificado_Calidad === "" || element.Certificado_Calidad === undefined || element.Certificado_Calidad === null) {
+          if (element?.Certificado_Calidad === "" || element?.Certificado_Calidad === undefined || element?.Certificado_Calidad === null) {
             textvalidation += "Certificado Calidad, "
           }
-          if (element.Prorroga_Sanitario === "" || element.Prorroga_Sanitario === undefined || element.Prorroga_Sanitario === null) {
-            if (element.Registro_Sanitario === "" || element.Registro_Sanitario === undefined || element.Registro_Sanitario === null) {
+          if (element?.Prorroga_Sanitario === "" || element?.Prorroga_Sanitario === undefined || element?.Prorroga_Sanitario === null) {
+            if (element?.Registro_Sanitario === "" || element?.Registro_Sanitario === undefined || element?.Registro_Sanitario === null) {
               textvalidation += "Registro Sanitario, "
             }
           }
 
-          if (element.Manifiesto === "" || element.Manifiesto === undefined || element.Manifiesto === null) {
+          if (element?.Manifiesto === "" || element?.Manifiesto === undefined || element?.Manifiesto === null) {
             textvalidation += "Manifiesto, "
           }
-          if (element.Carta_Vicios === "" || element.Carta_Vicios === undefined || element.Carta_Vicios === null) {
+          if (element?.Carta_Vicios === "" || element?.Carta_Vicios === undefined || element?.Carta_Vicios === null) {
             textvalidation += "Carta Vicios, "
           }
-          if (element.Carta_Garantia === "" || element.Carta_Garantia === undefined || element.Carta_Garantia === null) {
+          if (element?.Carta_Garantia === "" || element?.Carta_Garantia === undefined || element?.Carta_Garantia === null) {
             textvalidation += "Carta Garantia, "
           }
-          if (element.Carta_Canje === "" || element.Carta_Canje === undefined || element.Carta_Canje === null) {
+          if (element?.Carta_Canje === "" || element?.Carta_Canje === undefined || element?.Carta_Canje === null) {
             const canj: any = this.state.filteredData.filter((canje) => {
               return canje.LinkTitle === element.UrlArchivo;
             });
@@ -1315,7 +1306,6 @@ export default class HelloWorld extends React.Component<
         }) => {
           const filename = datoAI?.Title.toString().substring(datoAI?.Title.toString().lastIndexOf('/') + 1);
           const datos = filename.indexOf('PO-') > -1 || filename.indexOf('PO/') > -1;
-        //  const datos = datoAI?.Title.toString().indexOf('PO-') > -1 || datoAI?.Title.toString().indexOf('PO/') > -1;
           if (datos === false) {
 
             const dato: any = [];
@@ -1550,6 +1540,39 @@ export default class HelloWorld extends React.Component<
   }
 
 
+ 
+    executeFunctionWithSelectedRows = () => {
+      this.setState({ selectedRows:this.state.selectedRowsData });
+      // Do something with selectedRows in DataProcess component
+      console.log("datosselecionado",this.state.selectedRows);
+    };
+   
+  
+    
+    handleRowSelection = (rowData: any) => {
+      this.setState((prevState) => {
+        const { selectedRowsData } = prevState;
+    
+        // Check if the row is already selected
+        const isRowSelected = selectedRowsData.some((row: any) => row.ID === rowData.ID);
+    
+        if (isRowSelected) {
+          // Remove the row from selectedRowsData if it's already selected
+          const updatedSelectedRowsData = selectedRowsData.filter((row: any) => row.ID !== rowData.ID);
+    
+          return {
+            selectedRowsData: updatedSelectedRowsData,
+          };
+        } else {
+          // Clone the rowData and toggle the selected property
+          const newRowData = { ...rowData, selected: true };
+    
+          return {
+            selectedRowsData: [...selectedRowsData, newRowData],
+          };
+        }
+      });
+    };
 
 
   handleFilter = async (): Promise<void> => {
@@ -1583,6 +1606,7 @@ export default class HelloWorld extends React.Component<
     }, 3000);
 
   };
+  
   handledelete = async (archivo: any): Promise<void> => {
     this._hideModal();
     Swal.fire({
@@ -1693,16 +1717,13 @@ export default class HelloWorld extends React.Component<
   
 
   async componentDidMount(): Promise<void> {
-    /* await this.getAIDataTable();
-     await this.getRemisionDataTable();
-     await this.finalDataTable();*/
     this.setState({
       pending: false,
     });
-    //this.handleFilter();
+  
   }
-
   public render(): React.ReactElement<IHelloWorldProps> {
+
     const handleOnExport = (): void => {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(
@@ -1711,7 +1732,6 @@ export default class HelloWorld extends React.Component<
           const or = OR?.substring(OR.lastIndexOf("/") + 1);
           let tipomoneda = item.TIPO_MONEDA?.replace("(", "");
           tipomoneda = tipomoneda?.replace(")", "");
-
           return {
             NO_ORDEN_REPOSICION_UNOPS: item.NO_ORDEN_REPOSICION_UNOPS,
             OR: or,
@@ -1741,11 +1761,8 @@ export default class HelloWorld extends React.Component<
         }) => {
           let tipomoneda = item.TIPO_MONEDA?.replace("(", "");
           tipomoneda = item.TIPO_MONEDA?.replace(")", "");
-
           const filtefedar = this.state.listafederal?.filter(a => item?.RAZON_SOCIAL?.toLowerCase().indexOf(a.Title.toLowerCase()) >= 0);
-
           const rfcvalue = filtefedar.length > 0 ? filtefedar[0].RFC : item.RFC_LABORATORIO;
-
           return {
             CLAS_PTAL_OL: "098316150905",
             NO_LICITACION: item.NO_LICITACION,
@@ -1784,14 +1801,12 @@ export default class HelloWorld extends React.Component<
       XLSX.utils.book_append_sheet(wb, ws, "WMS IZEL");
       XLSX.utils.book_append_sheet(wb, ws2, "PCCA");
       XLSX.utils.book_append_sheet(wb, ws3, "PCC2");
-
       XLSX.writeFile(wb, "Factura.xlsx");
     };
 
     const textFieldStyles: Partial<ITextFieldStyles> = {
       fieldGroup: { width: 300 },
     };
-
     return (
       <><section>
         <div
@@ -1803,7 +1818,6 @@ export default class HelloWorld extends React.Component<
             flexWrap: "wrap",
           }}
         >
-
           <TextField
             label="Buscar por Número de Orden"
             type="search"
@@ -1883,12 +1897,13 @@ export default class HelloWorld extends React.Component<
                 allowDisabledFocus
                 onClick={() => this.handleFilter()} 
                  />
+                
+                  <Sendata  selectedRows={this.state.selectedRowsData} description={""} Remisiones={this.props.Remisiones} DatosAI={this.props.DatosAI} ListCheck={undefined} Tablareglas={undefined} ListaValidaciom={undefined} Documentos={undefined} context={this.props.context}   />
           <DefaultButton
             text="Exportar"
             allowDisabledFocus
             onClick={() => handleOnExport()} />
         </div>
-
         <br />
         {this.state.loading &&
           <Spinner label="Loading items..." size={SpinnerSize.large} />}
@@ -1897,7 +1912,23 @@ export default class HelloWorld extends React.Component<
             columns={this.state.columns}
             data={this.state.filteredData}
             pagination
-            progressPending={this.state.pending} />
+            onRowClicked={(rowData) => {
+              this.handleRowSelection([
+                ...this.state.selectedRows,
+                {
+                  ...rowData,
+                  selected: !rowData.selected,
+                },
+              ]);
+            }}
+          
+            selectableRows // Enable row selection
+            selectableRowsHighlight // Highlight selected rows
+            onSelectedRowsChange={(rowData) => {
+              this.handleRowSelection(rowData);
+            }}
+            conditionalRowStyles={conditionalRowStyles}
+            progressPending={this.state.pending} />       
           </>}
 
       </section>
@@ -1967,6 +1998,7 @@ export default class HelloWorld extends React.Component<
                   color: '#fff',
                 }
               }} />
+              
             </div>
           </div>
         </Modal >
