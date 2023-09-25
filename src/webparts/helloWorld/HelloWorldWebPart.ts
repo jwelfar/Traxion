@@ -20,6 +20,7 @@ export interface IHelloWorldWebPartProps {
   ListCheck:any;
   Tablareglas:any;
   ListaValidaciom:any;
+  Documentos:any;
 }
 
 export default class HelloWorldWebPart extends BaseClientSideWebPart<IHelloWorldWebPartProps> {
@@ -33,7 +34,8 @@ export default class HelloWorldWebPart extends BaseClientSideWebPart<IHelloWorld
         Remisiones: this.properties.Remisiones,
         DatosAI: this.properties.DatosAI,
         ListCheck:this.properties.ListCheck,
-        ListaValidaciom:this.properties.ListaValidaciom
+        ListaValidaciom:this.properties.ListaValidaciom,
+        Documentos:this.properties.Documentos
       }
     );
 
@@ -129,6 +131,19 @@ export default class HelloWorldWebPart extends BaseClientSideWebPart<IHelloWorld
                   context: this.context as any,
                   deferredValidationTime: 0,
                   key: "listPickerFieldId4",
+                }),
+                PropertyFieldListPicker("Documentos", {
+                  label: "Selecciona la lista de Documentos",
+                  selectedList: this.properties.Documentos,
+                  includeHidden: false,
+                  orderBy: PropertyFieldListPickerOrderBy.Title,
+                  disabled: false,
+                  includeListTitleAndUrl: true,
+                  onPropertyChange: this.onPropertyPaneFieldChanged,
+                  properties: this.properties,
+                  context: this.context as any,
+                  deferredValidationTime: 0,
+                  key: "listPickerFieldId5",
                 }),
               ],
             },

@@ -8,4 +8,7 @@ export interface IHelloWorldProps {
   ListCheck: any;
   Tablareglas: any;
   ListaValidaciom:any;
+  Documentos:any;
+
+
 }
