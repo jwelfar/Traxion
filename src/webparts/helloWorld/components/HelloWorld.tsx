@@ -508,7 +508,7 @@ export default class HelloWorld extends React.Component<
           ? ""
           : row?.ErrorTableClaveFecha,
       ordenreposicionsuma:
-        row?.ErrorSUma === null || row?.ErrorSUma === undefined
+        (row?.ErrorSUma === null || row?.ErrorSUma === undefined)||  row.LinkTitle.indexOf('CROSS') === -1
           ? ""
           : row?.ErrorSUma,
       errornoai:
@@ -1269,9 +1269,9 @@ export default class HelloWorld extends React.Component<
                 }
               }
               if (
-                element.OrdenReposicion === "" ||
+               ( element.OrdenReposicion === "" ||
                 element.OrdenReposicion === undefined ||
-                element.OrdenReposicion === null
+                element.OrdenReposicion === null) &&  element.UrlArchivo.indexOf('CROSS') !== -1
               ) {
                 textvalidation += "Orden Reposicióm";
               }
@@ -1884,6 +1884,9 @@ export default class HelloWorld extends React.Component<
     });
   };
 
+  
+  
+
   async componentDidMount(): Promise<void> {
     this.setState({
       pending: false,
@@ -2110,12 +2113,30 @@ export default class HelloWorld extends React.Component<
                 disabled={!this.state.datefrom}
               />
             </div>
+            </div>
+            <div
+              style={{
+                paddingTop:"10px",
+                width: "100%",
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "flex-end",
+              }}>
             <DefaultButton
               text="Buscar"
               allowDisabledFocus
               onClick={() => this.handleFilter()}
             />
-
+  </div>
+  <div
+              style={{
+                paddingTop:"10px",
+                width: "100%",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-end",
+              }}>
+                
             <Sendata
               selectedRows={rowdataselet}
               description={""}
@@ -2132,7 +2153,8 @@ export default class HelloWorld extends React.Component<
               allowDisabledFocus
               onClick={() => handleOnExport()}
             />
-          </div>
+ 
+            </div>
           <br />
           {this.state.loading && (
             <Spinner label="Loading items..." size={SpinnerSize.large} />

@@ -14,6 +14,7 @@ import { WebPartContext } from "@microsoft/sp-webpart-base";
 import * as moment from "moment";
 import { IDetailsTableItem } from "../HelloWorld";
 import { SID_API_KEY, SID_USER_TOKEN } from "../../config/apiconfig";
+import { DefaultButton, Modal } from "office-ui-fabric-react";
 
 export interface Root {
   iZELShippingNotification: IZelshippingNotification;
@@ -64,7 +65,7 @@ export interface Item {
   productionDate: string;
   expireDate: string;
   stockType?: string;
-  cost: number;
+  cost: string;
   auxiliary01: string;
   auxiliary02: string;
   auxiliary03: string;
@@ -81,6 +82,16 @@ export interface ITableState {
   RemisionesSelected: IDetailsTableItem[];
 }
 let _sp: SPFI = null;
+const modalStyles = {
+  main: {
+    padding: "2em",
+    maxWidth: "100%",
+    maxHeight: "100%",
+    height: 400,
+    width: 400,
+    overflowY: "auto",
+  },
+};
 export const getSP = (context?: WebPartContext): SPFI => {
   if (_sp === null && context !== null) {
     //You must add the @pnp/logging package to include the PnPLogging behavior it is no longer a peer dependency
@@ -95,13 +106,17 @@ export default class Sendata extends React.Component<
   any
 > {
   constructor(props: SendataProps & IHelloWorldProps) {
-    super(props);
+    super(props); this.state = {
+       // Initialize an array to store error responses
+    };
     this.state = {
       dataToSend: {
         key1: "value1",
         key2: "value2",
       },
+      apiErrorResponses: [],
       apiResponse: null,
+      showModal:false 
     };
   }
 
@@ -112,24 +127,36 @@ export default class Sendata extends React.Component<
       const serverResponse = await this.getRemisionDataTable();
 
      
+const usuario=this.props.context.pageContext.user.displayName;
+
       const selectedArray = (selectedRows as any)?.selectedRows;
       
       selectedArray.forEach(async (selectedRow: any) => {
+        const parts =selectedRow.CLUES_x002f_CPTALDESTINO.split(/[-\s]+/); // Split by either hyphen or space
+const firstPart = parts[0].trim();
+const currentDateTime = moment();
+
+// Format the date and time as "YYYY-MM-DD HH:MM:SS"
+const formattedDateTime = currentDateTime.format('YYYY-MM-DD HH:mm:ss');
+const plancode= selectedRow.ID_x002d_Remision.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
         const iZELShippingNotification: IZelshippingNotification = {
-          plantCode: "AVIORBR",
-          documentNumber: "",
+          plantCode: plancode,
+          documentNumber: "NA",
           documentType: "5",
-          billOfLading: selectedRow.NO_CONTRATO,
-          containerSeal: selectedRow.NO_LICITACION,
-          provider: "",
-          providerName: selectedRow.RAZON_SOCIAL,
+          documentDate:formattedDateTime,
+          billOfLading: selectedRow.NO_CONTRATO|| "NA",
+          containerSeal: selectedRow.NO_LICITACION|| "NA",
+          provider: selectedRow.RFC_LABORATORIO|| "NA",
+          providerName: selectedRow.RAZON_SOCIAL|| "NA",
           auxiliary01: "TEM_AMB",
           auxiliary02: "MXN",
           auxiliary03: "ESTANDAR",
-          auxiliary04: selectedRow.NO_REMISION,
-          auxiliary05: "",
-          auxiliary08: "",
-          auxiliary09: selectedRow.CLUES_x002f_CPTALDESTINO,
+          auxiliary04: selectedRow.NO_REMISION|| "NA",
+          auxiliary05: selectedRow.NO_REMISION|| "NA",
+          auxiliary08: usuario,
+          auxiliary09: firstPart|| "NA",
+          auxiliary10:"NA",
+          auxiliary11:"NA",
           items: [],
         };
           const { ID_x002d_Remision } = selectedRow;
@@ -142,20 +169,23 @@ export default class Sendata extends React.Component<
             let contador = 0;
             // Wrap matchingResponse in an array to ensure it's treated as an array
             const matchingResponseArray = Array.isArray(matchingResponse) ? matchingResponse : [matchingResponse];
-          
+            const extractedValue = selectedRow.CLAVE.match(/\d{3}\.\d{3}\.\d{4}/);
+
+            const result = extractedValue ? extractedValue[0] : "NA";
             matchingResponseArray.forEach((matchingResponseItem: any) => {
               const newItem: Item = {
                 itemNumber: (contador + 1).toString(),
-                material: selectedRow.CLAVE,
+                material: result,
                 batch: matchingResponseItem.Lote,
-                uom: "PZA",
-                quantity: matchingResponseItem.Cantidad,
-                productionDate: matchingResponseItem.Fecha_Fabircada,
-                expireDate: matchingResponseItem.Fecha_Caducidad,
-                cost: 0,
-                auxiliary01: selectedRow.REGISTRO_SANITARIO || matchingResponseItem.Registro_Sanitario,
-                auxiliary02: selectedRow.MARCA || matchingResponseItem.Marca,
-                auxiliary03: selectedRow.PROCEDENCIA || matchingResponseItem.Procedendia,
+                uom: "NA",
+                quantity: matchingResponseItem.Cantidad|| "NA",
+                productionDate: this.formatDateString(matchingResponseItem.Fecha_Fabircada),
+                expireDate:this.formatDateString(matchingResponseItem.Fecha_Caducidad),
+                cost: "0",
+                stockType: "UN",
+                auxiliary01: selectedRow.REGISTRO_SANITARIO || matchingResponseItem.Registro_Sanitario || "NA",
+                auxiliary02: selectedRow.MARCA || matchingResponseItem.Marca|| "NA",
+                auxiliary03: selectedRow.PROCEDENCIA || matchingResponseItem.Procedendia|| "NA",
               };
               iZELShippingNotification.items.push(newItem);
             });
@@ -166,29 +196,9 @@ export default class Sendata extends React.Component<
           }
         });
 
-     // console.log("iZELShippingNotification:", iZELShippingNotification);
-      //  this.setState({iZELShippingNotification});
-
-      // const filteredAndMappedData = selectedRows.map((row) => {
-      //   return row.selectedRows.map((selectedRow: any) => {
-      //     const { ID_x002d_Remision } = selectedRow;
-      //     const matchingResponse = serverResponse.find(
-      //       (responseObj: any) =>
-      //         responseObj.ID_x002d_Remision === ID_x002d_Remision
-      //     );
-      //     if (matchingResponse) {
-      // console.log("Filtered remision:", matchingResponse);
-      //       return { ...selectedRow, ...matchingResponse };
-      //     }
-      //     return null;
-      //   });
-      // });
-
-      // const flattenedData = filteredAndMappedData.reduce((acc, curr) => {
-      //   return acc.concat(curr);
-      // }, []);
-
-      // console.log("Filtered data:", flattenedData);
+     if(  this.state.apiErrorResponses.length>0){
+      this.setState({showModal:true});
+     }
     }
     console.log("selected", selectedRows);
   };
@@ -293,7 +303,46 @@ export default class Sendata extends React.Component<
       }
     }
   }
-
+  padStart = (input: string, targetLength: number, padString: string): string => {
+    while (input.length < targetLength) {
+      input = padString + input;
+    }
+    return input;
+  }
+  
+  convertDate(match: string, p1: string, p2: string | undefined): string {
+    let year: string;
+  if (p2 !== undefined && p2.length === 4) {
+    year = p2; // Assuming 4-digit year
+  } else if (p1.length >= 6) {
+    year = `20${p1.slice(6)}`;
+  } else {
+    // Handle invalid cases where year is missing or not in the expected format
+    return "Invalid date format";
+  }
+    const month = p1.slice(3, 5); // Extract characters at indices 3 and 4
+const day = p1.slice(0, 2);   // Extract characters at indices 0 and 1
+return `${year}-${month}-${day}`;
+  }
+  formatDateString = (input: string): string => {
+    // Define regular expressions to match different date formats
+    const regex1 = /^(\d{2}\/\d{2}\/\d{2})$/; // "06/03/23"
+    const regex2 = /^:\s*(\d{2}\/\d{2}\/\d{2})$/; // ": 06/03/23"
+    const regex3 = /^(\d{2}\/\d{2}\/\d{2})\.$/; // "06/03/23."
+    const regex4 = /^(\d{2}\/\d{2}\/\d{2})\s+(\d{4})$/; // "06/03/23 1233"
+  
+    if (regex1.test(input)) {
+      return input.replace(regex1, this.convertDate);
+    } else if (regex2.test(input)) {
+      return input.replace(regex2, this.convertDate);
+    } else if (regex3.test(input)) {
+      return input.replace(regex3, this.convertDate);
+    } else if (regex4.test(input)) {
+      return input.replace(regex4, this.convertDate);
+    } else {
+      return "Invalid date format";
+    }
+  }
   sendDataToAPI = (datesend: any) => {
     const apiUrl =
       "https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add";
@@ -315,21 +364,69 @@ export default class Sendata extends React.Component<
     })
     .then((data) => {
       console.log("API response:", data);
-      // Handle the API response here
-      this.setState({ apiResponse: data });
+      if (data.error) {
+        // If the response has an error, add it to the error responses array
+        this.setState((prevState: { apiErrorResponses: any; }) => ({
+          apiErrorResponses: [...prevState.apiErrorResponses, data],
+        }));
+      }
+      // Handle other cases or successful responses as needed
+      // ...
     })
     .catch((error) => {
-      // Handle errors, e.g., network issues
+      // Handle network errors or other exceptions
       console.error("API request error:", error);
     });
   };
+  private _hideModal = (): void => {
+
+    this.setState({ showModal: false });
+  };
 
   render() {
-    context: this.context;
     return (
-      <div>
-        <button onClick={this.executeAction}>Execute Action</button>
-      </div>
+      <><div>
+        <DefaultButton
+          text="Enviar WMS"
+          allowDisabledFocus
+          onClick={this.executeAction} />
+
+      </div><Modal
+        isOpen={this.state.showModal}
+        onDismiss={this._hideModal}
+        isBlocking={false}
+        styles={modalStyles}
+      >
+          <div>
+            <h1>Errores en Documento</h1>
+            {this.state.apiErrorResponses.map((error:any, index:any) => (
+            <li key={index}>{error}</li>
+    ))}
+            <div
+              style={{
+                padding: "8px",
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+              }}
+            >
+            
+              <DefaultButton
+                onClick={this._hideModal}
+                text="Close"
+                styles={{
+                  root: {
+                    right: "0",
+                    textalign: "center",
+                    top: "0",
+                    backgroundColor: "#f00",
+                    color: "#fff",
+                  },
+                }} />
+            </div>
+          </div>
+        </Modal></>
     );
   }
 }
