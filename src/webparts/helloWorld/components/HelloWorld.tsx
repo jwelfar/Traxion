@@ -114,6 +114,7 @@ interface MyItem {
   UrlArchivo: string;
   // add more properties as needed
 }
+let rowdataselet:any=[];
 const conditionalRowStyles = [
   {
     when: (row: any) => row.selected, // Apply style to selected rows
@@ -1687,7 +1688,7 @@ export default class HelloWorld extends React.Component<
   executeFunctionWithSelectedRows = () => {
     this.setState({ selectedRows: this.state.selectedRowsData });
     // Do something with selectedRows in DataProcess component
-    console.log("datosselecionado", this.state.selectedRows);
+    console.log("datosselecionado", this.state.selectedRowsData);
   };
 
   handleRowSelection = (rowData: any) => {
@@ -1704,14 +1705,15 @@ export default class HelloWorld extends React.Component<
         const updatedSelectedRowsData = selectedRowsData.filter(
           (row: any) => row.ID !== rowData.ID
         );
-
+        rowdataselet=rowData;
+        
         return {
           selectedRowsData: updatedSelectedRowsData,
         };
       } else {
         // Clone the rowData and toggle the selected property
-        const newRowData = { ...rowData, selected: true };
-
+        const newRowData = { ...rowData.selectedRows, selected: true };
+        rowdataselet=rowData;
         return {
           selectedRowsData: [...selectedRowsData, newRowData],
         };
@@ -2115,7 +2117,7 @@ export default class HelloWorld extends React.Component<
             />
 
             <Sendata
-              selectedRows={this.state.selectedRowsData}
+              selectedRows={rowdataselet}
               description={""}
               Remisiones={this.props.Remisiones}
               DatosAI={this.props.DatosAI}

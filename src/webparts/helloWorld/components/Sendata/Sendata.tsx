@@ -108,58 +108,66 @@ export default class Sendata extends React.Component<
   executeAction = async () => {
     const { selectedRows } = this.props;
 
-    if (selectedRows.length > 0) {
+    if (Object.keys(selectedRows).length>0) {
       const serverResponse = await this.getRemisionDataTable();
 
-      const shippingNotifications: IZelshippingNotification[] = [];
-
-      selectedRows.forEach((row) => {
-        row.selectedRows.forEach((selectedRow: any) => {
+     
+      const selectedArray = (selectedRows as any)?.selectedRows;
+      
+      selectedArray.forEach(async (selectedRow: any) => {
+        const iZELShippingNotification: IZelshippingNotification = {
+          plantCode: "AVIORBR",
+          documentNumber: "",
+          documentType: "5",
+          billOfLading: selectedRow.NO_CONTRATO,
+          containerSeal: selectedRow.NO_LICITACION,
+          provider: "",
+          providerName: selectedRow.RAZON_SOCIAL,
+          auxiliary01: "TEM_AMB",
+          auxiliary02: "MXN",
+          auxiliary03: "ESTANDAR",
+          auxiliary04: selectedRow.NO_REMISION,
+          auxiliary05: "",
+          auxiliary08: "",
+          auxiliary09: selectedRow.CLUES_x002f_CPTALDESTINO,
+          items: [],
+        };
           const { ID_x002d_Remision } = selectedRow;
           const matchingResponse = serverResponse.find(
             (responseObj: any) =>
               responseObj.ID_x002d_Remision === ID_x002d_Remision
           );
+
           if (matchingResponse) {
-            const iZELShippingNotification: IZelshippingNotification = {
-              plantCode: "AVIORBR",
-              documentNumber: "",
-              documentType: "5",
-              billOfLading: selectedRow.NO_CONTRATO,
-              containerSeal: selectedRow.NO_LICITACION,
-              provider: "",
-              providerName: selectedRow.RAZON_SOCIAL,
-              auxiliary01: "TEM_AMB",
-              auxiliary02: "MXN",
-              auxiliary03: "ESTANDAR",
-              auxiliary04: selectedRow.NO_REMISION,
-              auxiliary05: "",
-              auxiliary08: "",
-              auxiliary09: selectedRow.CLUES_x002f_CPTALDESTINO,
-              items: [],
-            };
+            let contador = 0;
+            // Wrap matchingResponse in an array to ensure it's treated as an array
+            const matchingResponseArray = Array.isArray(matchingResponse) ? matchingResponse : [matchingResponse];
+          
+            matchingResponseArray.forEach((matchingResponseItem: any) => {
+              const newItem: Item = {
+                itemNumber: (contador + 1).toString(),
+                material: selectedRow.CLAVE,
+                batch: matchingResponseItem.Lote,
+                uom: "PZA",
+                quantity: matchingResponseItem.Cantidad,
+                productionDate: matchingResponseItem.Fecha_Fabircada,
+                expireDate: matchingResponseItem.Fecha_Caducidad,
+                cost: 0,
+                auxiliary01: selectedRow.REGISTRO_SANITARIO || matchingResponseItem.Registro_Sanitario,
+                auxiliary02: selectedRow.MARCA || matchingResponseItem.Marca,
+                auxiliary03: selectedRow.PROCEDENCIA || matchingResponseItem.Procedendia,
+              };
+              iZELShippingNotification.items.push(newItem);
+            });
 
-            const newItem: Item = {
-              itemNumber: "1",
-              material: selectedRow.CLAVE,
-              batch: matchingResponse.Lote,
-              uom: "PZA",
-              quantity: matchingResponse.Cantidad,
-              productionDate: matchingResponse.Fecha_Fabircada,
-              expireDate: matchingResponse.Fecha_Caducidad,
-              cost: 0,
-              auxiliary01: selectedRow.REGISTRO_SANITARIO,
-              auxiliary02: selectedRow.MARCA,
-              auxiliary03: selectedRow.PROCEDENCIA,
-            };
-
-            iZELShippingNotification.items.push(newItem);
-            shippingNotifications.push(iZELShippingNotification);
+            
+          
+            await this.sendDataToAPI(iZELShippingNotification);
           }
         });
-      });
 
-      console.log("iZELShippingNotification:", shippingNotifications);
+     // console.log("iZELShippingNotification:", iZELShippingNotification);
+      //  this.setState({iZELShippingNotification});
 
       // const filteredAndMappedData = selectedRows.map((row) => {
       //   return row.selectedRows.map((selectedRow: any) => {
@@ -193,7 +201,7 @@ export default class Sendata extends React.Component<
 
   private async getRemisionDataTable(): Promise<any> {
     const { selectedRows } = this.props;
-    const selectedArray = (selectedRows[0] as any)?.selectedRows;
+    const selectedArray = (selectedRows as any)?.selectedRows;
     const validDates = selectedArray
       .map((remision: any) => {
         const date = new Date(remision.Created);
@@ -255,6 +263,7 @@ export default class Sendata extends React.Component<
             "Id"
           )
           .top(2000)
+          .filter(query)
           .getPaged();
 
         const data = items.results;
@@ -285,7 +294,7 @@ export default class Sendata extends React.Component<
     }
   }
 
-  sendDataToAPI = () => {
+  sendDataToAPI = (datesend: any) => {
     const apiUrl =
       "https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add";
 
@@ -296,19 +305,23 @@ export default class Sendata extends React.Component<
         "SID-API-KEY": SID_API_KEY,
         "SID-USER-TOKEN": SID_USER_TOKEN,
       },
-      body: JSON.stringify(this.state.dataToSend),
+      body: JSON.stringify(datesend),
     };
 
     fetch(apiUrl, requestOptions)
-      .then((response) => response.json())
-      .then((data) => {
-        // Handle the API response here
-        this.setState({ apiResponse: data });
-      })
-      .catch((error) => {
-        // Handle errors, e.g., network issues
-        console.error("API request error:", error);
-      });
+    .then((response) => {
+      console.log("Response status:", response.status);
+      return response.json();
+    })
+    .then((data) => {
+      console.log("API response:", data);
+      // Handle the API response here
+      this.setState({ apiResponse: data });
+    })
+    .catch((error) => {
+      // Handle errors, e.g., network issues
+      console.error("API request error:", error);
+    });
   };
 
   render() {
