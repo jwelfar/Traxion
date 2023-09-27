@@ -138,7 +138,7 @@ const currentDateTime = moment();
 
 // Format the date and time as "YYYY-MM-DD HH:MM:SS"
 const formattedDateTime = currentDateTime.format('YYYY-MM-DD HH:mm:ss');
-const plancode= selectedRow.ID_x002d_Remision.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
+const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
         const iZELShippingNotification: IZelshippingNotification = {
           plantCode: plancode,
           documentNumber: "NA",
@@ -188,11 +188,18 @@ const plancode= selectedRow.ID_x002d_Remision.indexOf('LOTIS') === -1? "IMSS":"L
                 auxiliary03: selectedRow.PROCEDENCIA || matchingResponseItem.Procedendia|| "NA",
               };
               iZELShippingNotification.items.push(newItem);
+              contador=contador+1;
+
             });
 
             
           
-            await this.sendDataToAPI(iZELShippingNotification);
+          const resutlapi =  await this.sendDataToAPI2(iZELShippingNotification);
+           if (resutlapi) {
+            console.log("api", resutlapi);
+          } else {
+            console.log("API request did not return a valid result.");
+          }
           }
         });
 
@@ -343,40 +350,72 @@ return `${year}-${month}-${day}`;
       return "Invalid date format";
     }
   }
-  sendDataToAPI = (datesend: any) => {
-    const apiUrl =
-      "https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add";
+  sendDataToAPI2 = async (iZELShippingNotification: any) => {
+    const myHeaders = new Headers();
+myHeaders.append("SID-API-KEY", SID_API_KEY);
+myHeaders.append("SID-USER-TOKEN",SID_USER_TOKEN);
+myHeaders.append("Content-Type", "application/json");
 
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "SID-API-KEY": SID_API_KEY,
-        "SID-USER-TOKEN": SID_USER_TOKEN,
-      },
-      body: JSON.stringify(datesend),
-    };
+const raw = JSON.stringify({
+  iZELShippingNotification
+});
 
-    fetch(apiUrl, requestOptions)
-    .then((response) => {
-      console.log("Response status:", response.status);
-      return response.json();
-    })
-    .then((data) => {
-      console.log("API response:", data);
-      if (data.error) {
-        // If the response has an error, add it to the error responses array
-        this.setState((prevState: { apiErrorResponses: any; }) => ({
-          apiErrorResponses: [...prevState.apiErrorResponses, data],
-        }));
-      }
-      // Handle other cases or successful responses as needed
-      // ...
-    })
-    .catch((error) => {
-      // Handle network errors or other exceptions
-      console.error("API request error:", error);
-    });
+const requestOptions: RequestInit = {
+  method: 'POST',
+  headers: myHeaders,
+  body: raw,
+  redirect: 'follow' as RequestRedirect, // Explicitly specify the type
+};
+const response = await fetch("https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add", requestOptions);
+const result = await response.text();
+return result; // Return the result
+
+// fetch("https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add", requestOptions)
+//   .then(response => response.text())
+//   .then(result => console.log(result))
+//   .catch(error => console.log('error', error));
+//   }
+
+  
+  // sendDataToAPI = async (datesend: any) => {
+    
+  //   const apiUrl =
+  //     "https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add";
+      
+  //   const requestOptions = {
+  //     method: "POST",
+  //     headers: {
+  //       "Accept":"*/*",
+  //       "Content-Type": "application/json",
+  //       "SID-API-KEY": SID_API_KEY,
+  //       "SID-USER-TOKEN": SID_USER_TOKEN,
+  //     },
+  //     body: JSON.stringify(datesend),
+  //   };
+   
+  //   const response = await fetch("https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add", requestOptions);
+  //   const result = await response.text();
+  //   return result; // Return the result
+    // fetch(apiUrl, requestOptions)
+    // .then((response) => {
+    //   console.log("Response status:", response.status);
+    //   return response.json();
+    // })
+    // .then((data) => {
+    //   console.log("API response:", data);
+    //   if (data.error) {
+    //     // If the response has an error, add it to the error responses array
+    //     this.setState((prevState: { apiErrorResponses: any; }) => ({
+    //       apiErrorResponses: [...prevState.apiErrorResponses, data],
+    //     }));
+    //   }
+    //   // Handle other cases or successful responses as needed
+    //   // ...
+    // })
+    // .catch((error) => {
+    //   // Handle network errors or other exceptions
+    //   console.error("API request error:", error);
+    // });
   };
   private _hideModal = (): void => {
 
