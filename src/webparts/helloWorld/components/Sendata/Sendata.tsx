@@ -14,7 +14,7 @@ import { WebPartContext } from "@microsoft/sp-webpart-base";
 import * as moment from "moment";
 import { IDetailsTableItem } from "../HelloWorld";
 //import { SID_API_KEY, SID_USER_TOKEN } from "../../config/apiconfig";
-import { DefaultButton, Modal } from "office-ui-fabric-react";
+import { DefaultButton } from "office-ui-fabric-react";
 import Swal from "sweetalert2";
 
 
@@ -78,6 +78,7 @@ export interface Item {
 interface SendataProps {
   context: WebPartContext; // Replace with the appropriate context type for SharePoint
   selectedRows: any[];
+ 
  // Define the type of selectedRows
 }
 
@@ -85,16 +86,7 @@ export interface ITableState {
   RemisionesSelected: IDetailsTableItem[];
 }
 let _sp: SPFI = null;
-const modalStyles = {
-  main: {
-    padding: "2em",
-    maxWidth: "100%",
-    maxHeight: "100%",
-    height: 400,
-    width: 400,
-    overflowY: "auto",
-  },
-};
+
 export const getSP = (context?: WebPartContext): SPFI => {
   if (_sp === null && context !== null) {
     //You must add the @pnp/logging package to include the PnPLogging behavior it is no longer a peer dependency
@@ -112,6 +104,8 @@ export default class Sendata extends React.Component<
     super(props); this.state = {
        // Initialize an array to store error responses
     };
+ 
+
     this.state = {
       dataToSend: {
         key1: "value1",
@@ -119,21 +113,32 @@ export default class Sendata extends React.Component<
       },
       apiError:[],
       apiResponse: null,
-      showModalSend:false 
+      showModalSend:false ,
+      loadingbut:false
     };
   }
 
   executeAction = async () => {
     const { selectedRows } = this.props;
-    const apiError:any = [];
     if (Object.keys(selectedRows).length>0) {
+    Swal.fire({
+      title: "Enviando ",
+      text: `Esto puede tardar uno segundo o minutos depende de la cantidad de archivos a enviar `,
+      allowOutsideClick: false,
+      footer:"por favor espere",
+      didOpen: () => {
+        Swal.showLoading()
+      }
+    });
+    this.setState({
+      loadingbut: true,
+    });
+    
+    const apiError:any = [];
+ 
       const serverResponse = await this.getRemisionDataTable();
-
-     
-const usuario=this.props.context.pageContext.user.displayName;
-
+      const usuario=this.props.context.pageContext.user.displayName;
       const selectedArray = (selectedRows as any)?.selectedRows;
-      
       for (const selectedRow of selectedArray) {
         const parts =selectedRow.CLUES_x002f_CPTALDESTINO.split(/[-\s]+/); // Split by either hyphen or space
 const firstPart = parts[0].trim();
@@ -198,14 +203,25 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
           const resutlapi =  await this.sendDataToAPI(iZELShippingNotification);
           if (!resutlapi.ok) {
             apiError.push(selectedRow);
+            this.setState({
+              loadloadingbuting: false,
+            });
             this.setState((prevState:any) => ({
               apiError: [...prevState.apiError, apiError],
             }));
             // Handle API errors here and add them to the apiError array
           
             console.log(resutlapi);
+               this.setState({
+                loadingbut: false,
+      });
+      Swal.close();
           }
         } catch (error) {
+          this.setState({
+            loadingbut: false,
+          });
+          Swal.close();
           console.log("Error", error);
           // Handle network or other errors here
           apiError.push(selectedRow);
@@ -244,6 +260,20 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
         footer:"por favor verificar"
       });
     }
+    else{
+      Swal.fire({
+        title: "Envío exitoso ",
+        text: `Se ha enviado exitosamente los datos.`,
+        allowOutsideClick: false,
+      });
+     
+        // Call the callback function to update rowdataselet in the parent component
+        this.setState({selectedRows:selectedArray});
+      
+    }
+    this.setState({
+      loadingbut: false,
+    });
     console.log("selected", selectedRows);
   }
   }
@@ -267,7 +297,7 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
     const minDate = new Date(Math.min(...validDates));
 
     this.setState({
-      loading: true,
+      loadingbut: true,
     });
     let query = "";
 
@@ -339,8 +369,9 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
         return response;
       } catch (err) {
         this.setState({
-          loading: false,
+          loadingbut: false,
         });
+        Swal.close();
         console.log("Error", err);
         err.res.json().then(() => {
           console.log("Failed to get list items!", err);
@@ -388,10 +419,7 @@ return `${year}-${month}-${day}`;
       return "Invalid date format";
     }
   }
-  private _hideModal = (): void => {
-
-    this.setState({ showModalSend: false });
-  };
+  
   sendDataToAPI = async (iZELShippingNotification: any) => {
     
     const apiUrl =
@@ -432,47 +460,15 @@ return `${year}-${month}-${day}`;
   render() {
     return (
       <><div>
+        
         <DefaultButton
-          text="Enviar WMS"
+          text={this.state.loadingbut? "Enviando": "Enviar a WMS" }
           allowDisabledFocus
-          onClick={this.executeAction} />
-
-      </div><Modal
-        isOpen={this.state.showModalSend}
-        onDismiss={this._hideModal}
-        isBlocking={false}
-        styles={modalStyles}
-      >
-          <div>
-            <h1>Errores en Documento</h1>
-            {this.state.apiError.map((error:any, index:any) => (
-            <li key={index}>{error}</li>
-    ))}
-            <div
-              style={{
-                padding: "8px",
-                display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-              }}
-            >
-            
-              <DefaultButton
-                onClick={this._hideModal}
-                text="Close"
-                styles={{
-                  root: {
-                    right: "0",
-                    textalign: "center",
-                    top: "0",
-                    backgroundColor: "#f00",
-                    color: "#fff",
-                  },
-                }} />
-            </div>
-          </div>
-        </Modal></>
+          disabled={this.state.loadingbut }
+          onClick={this.executeAction}
+           />
+  
+      </div></>
     );
   }
 }

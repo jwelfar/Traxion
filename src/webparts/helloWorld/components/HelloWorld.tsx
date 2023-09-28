@@ -1686,6 +1686,7 @@ export default class HelloWorld extends React.Component<
   };
 
   executeFunctionWithSelectedRows = () => {
+    
     this.setState({ selectedRows: this.state.selectedRowsData });
     // Do something with selectedRows in DataProcess component
     console.log("datosselecionado", this.state.selectedRowsData);
@@ -2147,6 +2148,7 @@ export default class HelloWorld extends React.Component<
               ListaValidaciom={undefined}
               Documentos={undefined}
               context={this.props.context}
+              
             />
             <DefaultButton
               text="Exportar"
