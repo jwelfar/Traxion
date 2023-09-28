@@ -13,8 +13,10 @@ import { SPFI, SPFx, spfi } from "@pnp/sp";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import * as moment from "moment";
 import { IDetailsTableItem } from "../HelloWorld";
-import { SID_API_KEY, SID_USER_TOKEN } from "../../config/apiconfig";
+//import { SID_API_KEY, SID_USER_TOKEN } from "../../config/apiconfig";
 import { DefaultButton, Modal } from "office-ui-fabric-react";
+import Swal from "sweetalert2";
+
 
 export interface Root {
   iZELShippingNotification: IZelshippingNotification;
@@ -75,7 +77,8 @@ export interface Item {
 
 interface SendataProps {
   context: WebPartContext; // Replace with the appropriate context type for SharePoint
-  selectedRows: any[]; // Define the type of selectedRows
+  selectedRows: any[];
+ // Define the type of selectedRows
 }
 
 export interface ITableState {
@@ -114,15 +117,15 @@ export default class Sendata extends React.Component<
         key1: "value1",
         key2: "value2",
       },
-      apiErrorResponses: [],
+      apiError:[],
       apiResponse: null,
-      showModal:false 
+      showModalSend:false 
     };
   }
 
   executeAction = async () => {
     const { selectedRows } = this.props;
-
+    const apiError:any = [];
     if (Object.keys(selectedRows).length>0) {
       const serverResponse = await this.getRemisionDataTable();
 
@@ -131,7 +134,7 @@ const usuario=this.props.context.pageContext.user.displayName;
 
       const selectedArray = (selectedRows as any)?.selectedRows;
       
-      selectedArray.forEach(async (selectedRow: any) => {
+      for (const selectedRow of selectedArray) {
         const parts =selectedRow.CLUES_x002f_CPTALDESTINO.split(/[-\s]+/); // Split by either hyphen or space
 const firstPart = parts[0].trim();
 const currentDateTime = moment();
@@ -191,24 +194,59 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
               contador=contador+1;
 
             });
-
-            
+          try{
+          const resutlapi =  await this.sendDataToAPI(iZELShippingNotification);
+          if (!resutlapi.ok) {
+            apiError.push(selectedRow);
+            this.setState((prevState:any) => ({
+              apiError: [...prevState.apiError, apiError],
+            }));
+            // Handle API errors here and add them to the apiError array
           
-          const resutlapi =  await this.sendDataToAPI2(iZELShippingNotification);
-           if (resutlapi) {
-            console.log("api", resutlapi);
-          } else {
-            console.log("API request did not return a valid result.");
+            console.log(resutlapi);
           }
+        } catch (error) {
+          console.log("Error", error);
+          // Handle network or other errors here
+          apiError.push(selectedRow);
+          this.setState((prevState:any) => ({
+            apiError: [...prevState.apiError, "Network error or other issue occurred"],
+          }));
+        }     
           }
+        }
+        const updatedSelectedArray = selectedArray.filter((x:any) => {
+          // Check if selectedRow is present in apiErrorResponses based on a unique identifier,
+          // for example, an ID or some other property that uniquely identifies each item
+          const existsInApiErrors = apiError.some((ap:any) => {
+            // Replace "uniqueIdentifierProperty" with the actual property that uniquely identifies each item
+            return x.uniqueIdentifierProperty === ap.uniqueIdentifierProperty;
+          });
+        
+          // If existsInApiErrors is true, keep the item; otherwise, remove it
+          return existsInApiErrors;
         });
-
-     if(  this.state.apiErrorResponses.length>0){
-      this.setState({showModal:true});
-     }
+        this.setState({apiError:apiError})
+        if( apiError.length>0){
+          selectedArray.length = 0;
+         // Clear the original selectedArray
+        Array.prototype.push.apply(selectedArray, updatedSelectedArray);
+        }
+     if( apiError.length>0){
+      const errorMessagesText = selectedArray
+      .map((x:any) => `${x.NO_REMISION} con proveedor: ${x.RAZON_SOCIAL}`)
+      .join("\n");
+    
+      Swal.fire({
+        title: "Erro al enviar ",
+        text: `Las siguientes Remisiones no se enviaron:\n${errorMessagesText}`,
+        allowOutsideClick: false,
+        footer:"por favor verificar"
+      });
     }
     console.log("selected", selectedRows);
-  };
+  }
+  }
 
   private formatDate(date: string): string {
     const datef = new Date(date);
@@ -350,77 +388,46 @@ return `${year}-${month}-${day}`;
       return "Invalid date format";
     }
   }
-  sendDataToAPI2 = async (iZELShippingNotification: any) => {
-    const myHeaders = new Headers();
-myHeaders.append("SID-API-KEY", SID_API_KEY);
-myHeaders.append("SID-USER-TOKEN",SID_USER_TOKEN);
-myHeaders.append("Content-Type", "application/json");
-
-const raw = JSON.stringify({
-  iZELShippingNotification
-});
-
-const requestOptions: RequestInit = {
-  method: 'POST',
-  headers: myHeaders,
-  body: raw,
-  redirect: 'follow' as RequestRedirect, // Explicitly specify the type
-};
-const response = await fetch("https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add", requestOptions);
-const result = await response.text();
-return result; // Return the result
-
-// fetch("https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add", requestOptions)
-//   .then(response => response.text())
-//   .then(result => console.log(result))
-//   .catch(error => console.log('error', error));
-//   }
-
-  
-  // sendDataToAPI = async (datesend: any) => {
-    
-  //   const apiUrl =
-  //     "https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add";
-      
-  //   const requestOptions = {
-  //     method: "POST",
-  //     headers: {
-  //       "Accept":"*/*",
-  //       "Content-Type": "application/json",
-  //       "SID-API-KEY": SID_API_KEY,
-  //       "SID-USER-TOKEN": SID_USER_TOKEN,
-  //     },
-  //     body: JSON.stringify(datesend),
-  //   };
-   
-  //   const response = await fetch("https://wapps02.gruposid.com.mx:4443/gas401/ws/r/izelwms/856/v1/add", requestOptions);
-  //   const result = await response.text();
-  //   return result; // Return the result
-    // fetch(apiUrl, requestOptions)
-    // .then((response) => {
-    //   console.log("Response status:", response.status);
-    //   return response.json();
-    // })
-    // .then((data) => {
-    //   console.log("API response:", data);
-    //   if (data.error) {
-    //     // If the response has an error, add it to the error responses array
-    //     this.setState((prevState: { apiErrorResponses: any; }) => ({
-    //       apiErrorResponses: [...prevState.apiErrorResponses, data],
-    //     }));
-    //   }
-    //   // Handle other cases or successful responses as needed
-    //   // ...
-    // })
-    // .catch((error) => {
-    //   // Handle network errors or other exceptions
-    //   console.error("API request error:", error);
-    // });
-  };
   private _hideModal = (): void => {
 
-    this.setState({ showModal: false });
+    this.setState({ showModalSend: false });
   };
+  sendDataToAPI = async (iZELShippingNotification: any) => {
+    
+    const apiUrl =
+      "https://system-customer-api-test.us-w2.cloudhub.io/api/customer/shipping/notification";
+      const requestBody :any ={
+        "iZELShippingNotification": iZELShippingNotification
+      };
+    const requestOptions = {
+      method: "POST",
+      headers: {
+
+        "Content-Type": "application/json",
+        "client_id": 'alksd82938-asdf23-ase23ew',
+        "client_secret": 'alksd82938-asdf23-ase23ew',
+       
+      },
+    
+      body: JSON.stringify(requestBody),
+      
+    };
+   
+   let response:any;
+    try {
+  
+    response= await  fetch(apiUrl, requestOptions);
+    } catch (error) {
+      console.log("Error",error);
+      return response;
+      
+    }
+    console.log("repsonse",response);
+    return response;
+   
+     
+}
+  
 
   render() {
     return (
@@ -431,14 +438,14 @@ return result; // Return the result
           onClick={this.executeAction} />
 
       </div><Modal
-        isOpen={this.state.showModal}
+        isOpen={this.state.showModalSend}
         onDismiss={this._hideModal}
         isBlocking={false}
         styles={modalStyles}
       >
           <div>
             <h1>Errores en Documento</h1>
-            {this.state.apiErrorResponses.map((error:any, index:any) => (
+            {this.state.apiError.map((error:any, index:any) => (
             <li key={index}>{error}</li>
     ))}
             <div
