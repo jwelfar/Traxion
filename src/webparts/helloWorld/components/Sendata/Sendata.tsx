@@ -78,7 +78,7 @@ export interface Item {
 interface SendataProps {
   context: WebPartContext; // Replace with the appropriate context type for SharePoint
   selectedRows: any[];
- 
+
  // Define the type of selectedRows
 }
 
@@ -114,9 +114,48 @@ export default class Sendata extends React.Component<
       apiError:[],
       apiResponse: null,
       showModalSend:false ,
-      loadingbut:false
+      loadingbut:false,
+      renisiones:[],
+      filteredDatafsend:[]
     };
   }
+   formatoNumerico= async (numero:string) => {
+    // Primero, eliminamos cualquier carácter que no sea un dígito
+    numero = numero.replace(/\D/g, '');
+
+    // Definimos los patrones de formato
+    const patrones = ['xx.xxx.xx', 'xx.xxx.xxxx.xx'];
+
+    // Elegimos el patrón de formato en función de la longitud del número
+    let patron = patrones[0];
+    if (numero.length >= 9) {
+        patron = patrones[1];
+    }
+
+    // Aplicamos el formato
+    let resultado = '';
+    let indice = 0;
+    for (let i = 0; i < patron.length; i++) {
+        if (patron[i] === 'x') {
+            resultado += numero[indice] || 'x'; // Usamos 'x' si no hay más dígitos
+            indice++;
+        } else {
+            resultado += patron[i];
+        }
+    }
+
+    return resultado;
+}
+
+
+ formatString= async (inputString:any) => {
+  const formattedString = inputString.replace(/[^0-9]/g, "");
+  let dotting = formattedString.substring(0,3) + "." + formattedString.substring(3,6) + "." + formattedString.substring(6,10) + "." + formattedString.substring(10,12)+ "."+formattedString.substring(12,14);
+  while (dotting[dotting.length-1] === ".")
+    dotting = dotting.slice(0,-1);
+
+  return dotting
+}
 
   executeAction = async () => {
     const { selectedRows } = this.props;
@@ -133,20 +172,47 @@ export default class Sendata extends React.Component<
     this.setState({
       loadingbut: true,
     });
-    
     const apiError:any = [];
- 
+    
       const serverResponse = await this.getRemisionDataTable();
+      this.setState({remisione:serverResponse});
+    
       const usuario=this.props.context.pageContext.user.displayName;
       const selectedArray = (selectedRows as any)?.selectedRows;
+      
       for (const selectedRow of selectedArray) {
-        const parts =selectedRow.CLUES_x002f_CPTALDESTINO.split(/[-\s]+/); // Split by either hyphen or space
-const firstPart = parts[0].trim();
-const currentDateTime = moment();
+        let firstPart:any;
+        if (selectedRow.CLUES_x002f_CPTALDESTINO) {
+          // Format the numerical value
+          const numeross = this.formatoNumerico(selectedRow.CLUES_x002f_CPTALDESTINO);
+            console.log(numeross);
+        
+          // Split by either hyphen or space
+          const parts = selectedRow.CLUES_x002f_CPTALDESTINO.split(/[-\s]+/);
+        
+          // Check if the first part exists and trim it
+          if (parts.length > 0) {
+             firstPart = parts[0].trim();
+            console.log(firstPart);
+          } else {
+            console.log('No parts found.');
+          }
+        } 
+        let rfcLaboratorio:any;
+        if (selectedRow.RFC_LABORATORIO) {
+          rfcLaboratorio = selectedRow.RFC_LABORATORIO.replace(/[-\s]/g, '');
+        }
+        let calvematerial:any;
+        if (selectedRow.CLAVE) {
+          calvematerial =await  this.formatString(selectedRow.CLAVE);
+        }else{
+          calvematerial="NA";
+        }
+        const currentDateTime = moment();
 
 // Format the date and time as "YYYY-MM-DD HH:MM:SS"
-const formattedDateTime = currentDateTime.format('YYYY-MM-DD HH:mm:ss');
-const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
+        const formattedDateTime = currentDateTime.format('YYYY-MM-DD HH:mm:ss');
+        const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
         const iZELShippingNotification: IZelshippingNotification = {
           plantCode: plancode,
           documentNumber: "NA",
@@ -154,7 +220,7 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
           documentDate:formattedDateTime,
           billOfLading: selectedRow.NO_CONTRATO|| "NA",
           containerSeal: selectedRow.NO_LICITACION|| "NA",
-          provider: selectedRow.RFC_LABORATORIO|| "NA",
+          provider: rfcLaboratorio|| "NA",
           providerName: selectedRow.RAZON_SOCIAL|| "NA",
           auxiliary01: "TEM_AMB",
           auxiliary02: "MXN",
@@ -162,33 +228,40 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
           auxiliary04: selectedRow.NO_REMISION|| "NA",
           auxiliary05: selectedRow.NO_REMISION|| "NA",
           auxiliary08: usuario,
-          auxiliary09: firstPart|| "NA",
+          auxiliary09: selectedRow.CLUES_x002f_CPTALDESTINO|| "NA",
           auxiliary10:"NA",
           auxiliary11:"NA",
           items: [],
         };
           const { ID_x002d_Remision } = selectedRow;
-          const matchingResponse = serverResponse.find(
+          const matchingResponse = serverResponse.filter(
             (responseObj: any) =>
               responseObj.ID_x002d_Remision === ID_x002d_Remision
           );
+
 
           if (matchingResponse) {
             let contador = 0;
             // Wrap matchingResponse in an array to ensure it's treated as an array
             const matchingResponseArray = Array.isArray(matchingResponse) ? matchingResponse : [matchingResponse];
-            const extractedValue = selectedRow.CLAVE.match(/\d{3}\.\d{3}\.\d{4}/);
-
-            const result = extractedValue ? extractedValue[0] : "NA";
+            //const extractedValue = selectedRow.CLAVE.match(/\d{1,3}\.\d{3}\.\d{4}\.\d{2}/);
+          //  const result = extractedValue ? extractedValue[0] : "NA";
+        
             matchingResponseArray.forEach((matchingResponseItem: any) => {
               const newItem: Item = {
                 itemNumber: (contador + 1).toString(),
-                material: result,
-                batch: matchingResponseItem.Lote,
+                material: calvematerial,
+                batch: matchingResponseItem.Lote || "NA",
                 uom: "NA",
-                quantity: matchingResponseItem.Cantidad|| "NA",
-                productionDate: this.formatDateString(matchingResponseItem.Fecha_Fabircada),
-                expireDate:this.formatDateString(matchingResponseItem.Fecha_Caducidad),
+                quantity: matchingResponseItem.Cantidad|| 0,
+                productionDate: (() => {
+                  const formattedDate = this.formatDateString(matchingResponseItem.Fecha_Fabircada);
+                  return formattedDate !== "Invalid date format" ? formattedDate : "1900-01-01";
+                })(),
+                expireDate: (() => {
+                  const formattedDate = this.formatDateString(matchingResponseItem.Fecha_Caducidad);
+                  return formattedDate !== "Invalid date format" ? formattedDate : "1900-01-01";
+                })(),
                 cost: "0",
                 stockType: "UN",
                 auxiliary01: selectedRow.REGISTRO_SANITARIO || matchingResponseItem.Registro_Sanitario || "NA",
@@ -328,6 +401,7 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
             "T23:59:00'";
         }
       }
+      query += " and TipoTabla eq 'RemisionTabla2'"
     }
     let items: any = [];
     if (this.props.Remisiones) {
@@ -348,7 +422,7 @@ const plancode= selectedRow.Title.indexOf('LOTIS') === -1? "IMSS":"LOTIS";
             "Id"
           )
           .top(2000)
-          .filter(query)
+          .filter(query )
           .getPaged();
 
         const data = items.results;
@@ -401,6 +475,18 @@ const day = p1.slice(0, 2);   // Extract characters at indices 0 and 1
 return `${year}-${month}-${day}`;
   }
   formatDateString = (input: string): string => {
+    const regex = /^(\d{2}\/\d{2}\/\d{4})$/; // "25/09/2025"
+
+    // Check if the input is already in the "25/09/2025" format
+    if (regex.test(input)) {
+      const parts = input.split('/');
+          if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const formattedDate = `${year}-${month}-${day}`;
+            return formattedDate;
+          } 
+      
+    }
     // Define regular expressions to match different date formats
     const regex1 = /^(\d{2}\/\d{2}\/\d{2})$/; // "06/03/23"
     const regex2 = /^:\s*(\d{2}\/\d{2}\/\d{2})$/; // ": 06/03/23"
@@ -416,7 +502,7 @@ return `${year}-${month}-${day}`;
     } else if (regex4.test(input)) {
       return input.replace(regex4, this.convertDate);
     } else {
-      return "Invalid date format";
+      return "1900-01-01";
     }
   }
   
@@ -455,7 +541,130 @@ return `${year}-${month}-${day}`;
    
      
 }
-  
+  //  finalDataTable = async (): Promise<void> => {
+  //   const result: any = [];
+  //  try {
+  //   const { selectedRows } = this.props;
+  //   const selectedArray = (selectedRows as any)?.selectedRows;
+  //   let resutllote: any = [];
+  //   this.state.remisione.forEach((remision: { ID_x002d_Remision: any }) => {
+  //     selectedArray.filter((datoAI: { Title: any }) => {
+  //       if (datoAI.Title === remision.ID_x002d_Remision) {
+  //         resutllote.push(datoAI);
+  //       }
+  //     });
+  //   });
+   
+   
+  //   if (Object.keys(selectedRows).length>0) {
+  //     if (this.state.remisione.length > 0) {
+  //       resutllote.forEach(
+  //         (datoAI: { NO_ORDEN_REPOSICION_UNOPS: any; Title: any }) => {
+  //           const filename = datoAI?.Title.toString().substring(
+  //             datoAI?.Title.toString().lastIndexOf("/") + 1
+  //           );
+  //           const dato =
+  //             filename.indexOf("PO-") > -1 || filename.indexOf("PO/") > -1;
+  //           if (dato === false) {
+  //             const remFilter = this.state.remisione.filter(
+  //               (remision: { ID_x002d_Remision: any }) => {
+  //                 return datoAI.Title === remision.ID_x002d_Remision;
+  //               }
+  //             );
+  //             if (remFilter.length === 0) {
+  //               result.push(datoAI);
+  //             } else {
+  //               const results = remFilter.reduce((x: any, y: any) => {
+  //                 (x[y.Lote] = x[y.Lote] || []).push(y);
+  //                 return x;
+  //               }, {});
+
+  //               const datos = Object.keys(results);
+  //               const dato: any = [];
+  //               datos.forEach((ele) => {
+  //                 dato.push(results[ele]);
+  //               });
+
+  //               const joinObject = (dataJson: any) => {
+  //                 let resultObj = {};
+  //                 const resultArray = [];
+
+  //                 const finalObj = (
+  //                   currentObj: any = {},
+  //                   nextObj: any = {}
+  //                 ) => {
+  //                   let resObj = { ...currentObj };
+  //                   for (const k in nextObj) {
+  //                     if (nextObj[k] === null) {
+  //                       resObj = { ...resObj };
+  //                     } else {
+  //                       resObj = { ...resObj, [k]: nextObj[k] };
+  //                     }
+  //                   }
+  //                   return resObj;
+  //                 };
+
+  //                 for (let i = 0; i < dataJson.length; i++) {
+  //                   for (let j = 0; j < dataJson[i].length; j++) {
+  //                     resultObj = finalObj(resultObj, dataJson[i][j]);
+  //                   }
+  //                   resultArray.push(resultObj);
+  //                   resultObj = {};
+  //                 }
+
+  //                 return resultArray;
+  //               };
+
+  //               result.push(
+  //                 joinObject(dato).map((item) => {
+  //                   return {
+  //                     ...datoAI,
+  //                     ...item,
+  //                   };
+  //                 })
+  //               );
+  //             }
+  //           }
+  //         }
+  //       );
+
+  //       this.setState({
+  //         filteredDatafsend: result.flat(),
+  //       });
+       
+  //       this.setState({
+  //         loadingbut: false,
+  //       });
+  //       return result.flat();
+  //     } else {
+  //       selectedArray.forEach(
+  //         (datoAI: { NO_ORDEN_REPOSICION_UNOPS: any; Title: any }) => {
+  //           const filename = datoAI?.Title.toString().substring(
+  //             datoAI?.Title.toString().lastIndexOf("/") + 1
+  //           );
+  //           const datos =
+  //             filename.indexOf("PO-") > -1 || filename.indexOf("PO/") > -1;
+  //           if (datos === false) {
+  //             const dato: any = [];
+
+  //             dato.push(datoAI);
+  //           }
+  //         }
+  //       );
+  //       this.setState({
+  //         filteredDatafsend: result.flat(),
+  //       });
+  //       this.setState({
+  //         loadingbut: false,
+  //       });
+  //     }
+  //   }
+  // } catch (error) {
+  //   this.setState({
+  //     loadingbut: false,
+  //   });
+  // }
+  // };
 
   render() {
     return (
