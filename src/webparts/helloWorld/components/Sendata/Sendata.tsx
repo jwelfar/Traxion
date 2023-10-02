@@ -63,7 +63,7 @@ export interface Item {
   uom: string;
   stockCategory?: string;
   serialNumber?: string;
-  quantity: number;
+  quantity: string;
   productionDate: string;
   expireDate: string;
   stockType?: string;
@@ -80,6 +80,11 @@ interface SendataProps {
   selectedRows: any[];
 
  // Define the type of selectedRows
+}
+interface erorrarray{
+  Razonsocial:any,
+  Remision:any,
+  Errorrow:any
 }
 
 export interface ITableState {
@@ -159,6 +164,7 @@ export default class Sendata extends React.Component<
 
   executeAction = async () => {
     const { selectedRows } = this.props;
+    const erorrarrayInstance: erorrarray []= [];
     if (Object.keys(selectedRows).length>0) {
     Swal.fire({
       title: "Enviando ",
@@ -181,6 +187,7 @@ export default class Sendata extends React.Component<
       const selectedArray = (selectedRows as any)?.selectedRows;
       
       for (const selectedRow of selectedArray) {
+        
         let firstPart:any;
         if (selectedRow.CLUES_x002f_CPTALDESTINO) {
           // Format the numerical value
@@ -253,7 +260,7 @@ export default class Sendata extends React.Component<
                 material: calvematerial,
                 batch: matchingResponseItem.Lote || "NA",
                 uom: "NA",
-                quantity: matchingResponseItem.Cantidad|| 0,
+                quantity: matchingResponseItem.Cantidad,
                 productionDate: (() => {
                   const formattedDate = this.formatDateString(matchingResponseItem.Fecha_Fabircada);
                   return formattedDate !== "Invalid date format" ? formattedDate : "1900-01-01";
@@ -275,7 +282,22 @@ export default class Sendata extends React.Component<
           try{
           const resutlapi =  await this.sendDataToAPI(iZELShippingNotification);
           if (!resutlapi.ok) {
+            const responseData = await resutlapi.json();
+            console.log("responseerrro",responseData);
+            const errorMessagesText = responseData.Errors
+            .map((x:any) => `${x} errores}`)
+            .join("\n");
+            const data1: erorrarray = {
+              Remision: selectedRow.NO_REMISION,
+              Errorrow: errorMessagesText,
+              Razonsocial: selectedRow.RAZON_SOCIAL,
+            };
+            
+            // Push the object to the array
+            erorrarrayInstance.push(data1);
+                       
             apiError.push(selectedRow);
+            
             this.setState({
               loadloadingbuting: false,
             });
@@ -322,13 +344,13 @@ export default class Sendata extends React.Component<
         Array.prototype.push.apply(selectedArray, updatedSelectedArray);
         }
      if( apiError.length>0){
-      const errorMessagesText = selectedArray
-      .map((x:any) => `${x.NO_REMISION} con proveedor: ${x.RAZON_SOCIAL}`)
-      .join("\n");
-    
+      // const errorMessagesText = selectedArray
+      // .map((x:any) => `${x.NO_REMISION} con proveedor: ${x.RAZON_SOCIAL}`)
+      // .join("\n");
+      const errorMessagesText = erorrarrayInstance.map((x: erorrarray) => `${x.Remision} con proveedor: ${x.Razonsocial} con los siguientes campos:\n${x.Errorrow}\n`);
       Swal.fire({
         title: "Erro al enviar ",
-        text: `Las siguientes Remisiones no se enviaron:\n${errorMessagesText}`,
+        html: `<div style="white-space: pre-line;">Las siguientes Remisiones no se enviaron:\n${errorMessagesText.join("\n")}</div>`,
         allowOutsideClick: false,
         footer:"por favor verificar"
       });
@@ -507,6 +529,8 @@ return `${year}-${month}-${day}`;
   }
   
   sendDataToAPI = async (iZELShippingNotification: any) => {
+    try {
+      
     
     const apiUrl =
       "https://system-customer-api-test.us-w2.cloudhub.io/api/customer/shipping/notification";
@@ -533,138 +557,20 @@ return `${year}-${month}-${day}`;
     response= await  fetch(apiUrl, requestOptions);
     } catch (error) {
       console.log("Error",error);
+      console.error(`HTTP Error: ${response.status}`);
       return response;
       
     }
     console.log("repsonse",response);
     return response;
-   
+   } catch (error) {
+    console.log("Error",error);
+    this.setState({
+      loadingbut: false,
+    });
+    }
      
 }
-  //  finalDataTable = async (): Promise<void> => {
-  //   const result: any = [];
-  //  try {
-  //   const { selectedRows } = this.props;
-  //   const selectedArray = (selectedRows as any)?.selectedRows;
-  //   let resutllote: any = [];
-  //   this.state.remisione.forEach((remision: { ID_x002d_Remision: any }) => {
-  //     selectedArray.filter((datoAI: { Title: any }) => {
-  //       if (datoAI.Title === remision.ID_x002d_Remision) {
-  //         resutllote.push(datoAI);
-  //       }
-  //     });
-  //   });
-   
-   
-  //   if (Object.keys(selectedRows).length>0) {
-  //     if (this.state.remisione.length > 0) {
-  //       resutllote.forEach(
-  //         (datoAI: { NO_ORDEN_REPOSICION_UNOPS: any; Title: any }) => {
-  //           const filename = datoAI?.Title.toString().substring(
-  //             datoAI?.Title.toString().lastIndexOf("/") + 1
-  //           );
-  //           const dato =
-  //             filename.indexOf("PO-") > -1 || filename.indexOf("PO/") > -1;
-  //           if (dato === false) {
-  //             const remFilter = this.state.remisione.filter(
-  //               (remision: { ID_x002d_Remision: any }) => {
-  //                 return datoAI.Title === remision.ID_x002d_Remision;
-  //               }
-  //             );
-  //             if (remFilter.length === 0) {
-  //               result.push(datoAI);
-  //             } else {
-  //               const results = remFilter.reduce((x: any, y: any) => {
-  //                 (x[y.Lote] = x[y.Lote] || []).push(y);
-  //                 return x;
-  //               }, {});
-
-  //               const datos = Object.keys(results);
-  //               const dato: any = [];
-  //               datos.forEach((ele) => {
-  //                 dato.push(results[ele]);
-  //               });
-
-  //               const joinObject = (dataJson: any) => {
-  //                 let resultObj = {};
-  //                 const resultArray = [];
-
-  //                 const finalObj = (
-  //                   currentObj: any = {},
-  //                   nextObj: any = {}
-  //                 ) => {
-  //                   let resObj = { ...currentObj };
-  //                   for (const k in nextObj) {
-  //                     if (nextObj[k] === null) {
-  //                       resObj = { ...resObj };
-  //                     } else {
-  //                       resObj = { ...resObj, [k]: nextObj[k] };
-  //                     }
-  //                   }
-  //                   return resObj;
-  //                 };
-
-  //                 for (let i = 0; i < dataJson.length; i++) {
-  //                   for (let j = 0; j < dataJson[i].length; j++) {
-  //                     resultObj = finalObj(resultObj, dataJson[i][j]);
-  //                   }
-  //                   resultArray.push(resultObj);
-  //                   resultObj = {};
-  //                 }
-
-  //                 return resultArray;
-  //               };
-
-  //               result.push(
-  //                 joinObject(dato).map((item) => {
-  //                   return {
-  //                     ...datoAI,
-  //                     ...item,
-  //                   };
-  //                 })
-  //               );
-  //             }
-  //           }
-  //         }
-  //       );
-
-  //       this.setState({
-  //         filteredDatafsend: result.flat(),
-  //       });
-       
-  //       this.setState({
-  //         loadingbut: false,
-  //       });
-  //       return result.flat();
-  //     } else {
-  //       selectedArray.forEach(
-  //         (datoAI: { NO_ORDEN_REPOSICION_UNOPS: any; Title: any }) => {
-  //           const filename = datoAI?.Title.toString().substring(
-  //             datoAI?.Title.toString().lastIndexOf("/") + 1
-  //           );
-  //           const datos =
-  //             filename.indexOf("PO-") > -1 || filename.indexOf("PO/") > -1;
-  //           if (datos === false) {
-  //             const dato: any = [];
-
-  //             dato.push(datoAI);
-  //           }
-  //         }
-  //       );
-  //       this.setState({
-  //         filteredDatafsend: result.flat(),
-  //       });
-  //       this.setState({
-  //         loadingbut: false,
-  //       });
-  //     }
-  //   }
-  // } catch (error) {
-  //   this.setState({
-  //     loadingbut: false,
-  //   });
-  // }
-  // };
 
   render() {
     return (
